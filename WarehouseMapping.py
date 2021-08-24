@@ -16,6 +16,14 @@ class Place(object):
         self.location = location
         self.shelf = shelf
 
+    def __eq__(self, other_place):
+        if isinstance(other_place, Place):
+            return self.location == other_place.location and self.shelf == other_place.shelf
+        return False
+
+    def __str__(self):
+        return '(' + str(self.location) + ', ' + str(self.shelf) + ')'
+
     def inWarehouse(self):
         return 0 <= self.location < AISLES*LOCATIONS_PER_AISLE and 0 <= self.shelf < SHELFS
 
@@ -45,18 +53,20 @@ class WarehouseMapping(object):
         for (i,j) in itertools.product(_range,_range):
             self._Loc2DMap[i][j] = self.distance(Place(i, 4), Place(j, 4), walk_dist=True)
 
-    def getLoc2DMapForTSP(self, locs: list):
-        locs.append(-1) # dummy location for end
-        locs.insert(0,ENTRANCE) # entrance node for start
+    """"including shelfs height!"""
+    def getLoc2DMapForTSP(self, places: list):
+        places.append(Place(-1, 1))  # dummy location for end
+        places.insert(0, Place(ENTRANCE, 1))  # entrance node for start
+        locs = [p.location for p in places]
         index_to_locs = {index: loc for index, loc in enumerate(locs)}
-        n = len(locs)
-        map = np.zeros((n,n))
+        n = len(places)
+        map = np.zeros((n, n))
         for i in range(n):
             for j in range(n):
-                if locs[i]==-1 or locs[j]==-1:
+                if places[i].location==-1 or places[j].location==-1:
                     map[i, j]=0
                     continue
-                map[i, j] = self.distance(Place(locs[i],1), Place(locs[j],2), walk_dist=True)
+                map[i, j] = self.distance(places[i], places[j], walk_dist=False)
         return (map, index_to_locs)
 
 
@@ -113,10 +123,11 @@ class WarehouseMapping(object):
 
 
 
-
+"""
 if __name__ == '__main__':
     mapping = WarehouseMapping(calculate_loc2Dmatrix=True)
     print(mapping.fromEntrance(Place(202, 2)))
     print(mapping.distance(Place(206, 3), Place(204, 4)))
     mat = mapping.getLoc2DMap()
     print(mat)
+"""

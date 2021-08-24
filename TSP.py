@@ -1,9 +1,10 @@
 
-"""Simple travelling salesman problem between cities."""
+PICKER_VELOCITY = 1.4  # m/s (3.6 km/h = 1 m/s)
+
 
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
-from WarehouseMapping import WarehouseMapping
+from WarehouseMapping import WarehouseMapping, Place
 
 
 def create_data_model(mapping, map):
@@ -39,13 +40,13 @@ def print_solution(manager, routing, solution, index_to_locs):
     plan_output += ' {}\n'.format(index_to_locs.get(manager.IndexToNode(index)))
     plan_output += 'Route walking distance: {} meters\n'.format(route_distance)
     print(plan_output)
+    return route_distance
 
-def main(locs):
-    """Entry point of the program."""
+def findMinimalRoute(places: list):
     # Instantiate the data problem.
     mapping = WarehouseMapping(calculate_loc2Dmatrix=True)
 
-    map, index_to_locs = mapping.getLoc2DMapForTSP(locs)
+    map, index_to_locs = mapping.getLoc2DMapForTSP(places)
 
     data = create_data_model(mapping, map)
 
@@ -78,17 +79,33 @@ def main(locs):
     solution = routing.SolveWithParameters(search_parameters)
 
     # Print solution on console.
-    route = None
+    best_route = None
+    route_distance = None
     if solution:
-        print_solution(manager, routing, solution, index_to_locs)
-        route = get_route(manager, routing, solution, index_to_locs)
-    return route
+        route_distance = print_solution(manager, routing, solution, index_to_locs)
+        best_route = get_route(manager, routing, solution, index_to_locs)
+    return best_route, route_distance
 
-def TSPsolver(locs):
-    best_route = main(locs)
-    return best_route
 
-if __name__ == '__main__':
-    locs = [1, 101, 200, 705, 303, 55, 755, 455, 630, 350, 230]
-    route = main(locs)
-    assert(len(route) == len(locs)-2)
+def TSPsolver(places: list):  # list of places
+    shelfs = [l.shelf for l in places]
+    best_route, total_distance = findMinimalRoute(places)
+    sortedPlaces = pairShelfsToBestRoute(best_route, places)
+    total_time = (total_distance/PICKER_VELOCITY) + len(best_route)  # a second for each stopping point
+    return sortedPlaces, total_time
+
+def pairShelfsToBestRoute(best_route, places):
+    #best_route is list[int], places is list[Place]
+    sortedPairs = []
+    for loc in best_route:
+        for place in places:
+            if loc == place.location:
+                sortedPairs.append(Place(place.location, place.shelf))
+                places.remove(place)
+    return sortedPairs
+
+
+if __name__ =='__main__':
+    res, time = TSPsolver([Place(301, 3), Place(200, 4), Place(502, 1)])
+    print(*res)
+    print(time)
