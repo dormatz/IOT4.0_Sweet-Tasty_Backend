@@ -1,0 +1,17 @@
+PRE RUN:
+
+pip3 install torch
+
+pip3 install google-cloud-storage
+pip3 install firebase
+pip3 install firebase_admin
+
+pip3 install flask
+pip3 install flask_restful
+
+pip3 install ortools
+
+HOW TO RUN:
+
+set FLASK_APP=app.py
+python3 app.py
