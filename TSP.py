@@ -1,10 +1,6 @@
-
-PICKER_VELOCITY = 1.4  # m/s (3.6 km/h = 1 m/s)
-
-
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
-from WarehouseMapping import WarehouseMapping, Place
+from WarehouseMapping import WarehouseMapping, Place, PICKER_VELOCITY
 
 
 def create_data_model(mapping, map):

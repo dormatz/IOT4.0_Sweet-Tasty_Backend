@@ -1,33 +1,30 @@
 #!/usr/bin/env python
-import pyrebase
-from WarehouseMapping import Place, WarehouseMapping, AISLES, SHELFS, LOCATIONS_PER_AISLE, LOCATIONS, NUM_OF_PLACES
+
+from WarehouseMapping import Place, WarehouseMapping, SHELFS, LOCATIONS_PER_AISLE, AISLES
 import json
 import os
-import ast
-
-DIR_EMPTY_SPACES = "emptySpaces.txt"
-DIR_STORAGE = "storage.txt"
+from firebase_con import getEmptySpaceCollectionFirebase, getStorageCollectionFirebase, updateStorageCollectionFirebase, updateEmptySpaces
+from copy import deepcopy
 
 class State(object):
-    def __init__(self, warehouse, boxesToInsert):
+    def __init__(self, boxesToInsert):
         """
-        products- list [ Box ]
-
+        WareHouse- Warehouse element
+        insertedBoxes- list of dicts of {Place, Box} elements
+        boxesToInsert- list of Box elements
         """
-        self.warehouse = warehouse
-        self.boxesToInsert = boxesToInsert
+        self.warehouse = Warehouse(len(boxesToInsert)*10)
+        self.boxesToInsert = deepcopy(boxesToInsert)
         self.insertedBoxes = []
 
     def isDone(self):
-        if len(self.boxesToInsert) == 0:
-            return True
-        return False
+        return len(self.boxesToInsert) == 0
 
-    def insertBox(self, place, reward):
+    def insertBox(self, place):
         box = self.boxesToInsert[0]
         self.warehouse.insertBox(place, box)
-        self.insertedBoxes.append({"location":place.location, "shelf":place.shelf, "id":box.id})
-        self.boxesToInsert.remove(box)
+        self.insertedBoxes.append({"place":place, "box":box})
+        self.boxesToInsert.pop(0)
 
 class Box(object):
     def __init__(self, id=-1, quantity=0):
@@ -39,82 +36,84 @@ class Box(object):
     
     def isEmpty(self):
         return self.quantity == 0
+    
+    def id(self):
+        return self.id
+
+    def __str__(self):
+        return '(' + str(self.id) + ', ' + str(self.quantity) + ')'
+
+    def __repr__(self):
+        return '(' + str(self.id) + ', ' + str(self.quantity) + ')'
 
 class Warehouse(object):
-    def __init__(self):
+    def __init__(self, numEmptySpaces, itemsToRemove=None):
         """
         *The warehouse starts empty.
+        *storage- list (which represents location) of list (which reperesnts shelf) of (Place, Box) = (location, shelf, id, quantity)
+        emptySpaces- list of all empty Place() elements.
         """
-        self.storage = [[Box()]*SHELFS]*LOCATIONS if not os.isfile(DIR_STORAGE) else recoverStorage()
-        self.emptySpaces = [Place(location, shelf) for shelf in range(SHELFS) for location in range(LOCATIONS)] if not os.isfile(DIR_EMPTY_SPACES) else recoverEmptySpaces()
+        self.storage = []
+        if itemsToRemove:
+            ids = [item.id for item in itemsToRemove]
+            docs = getStorageCollectionFirebase(ids)
+        else:
+            docs = getStorageCollectionFirebase()
+        for doc in docs:
+            item = doc.to_dict()            
+            self.storage.append({'place':Place(item['location'],item['shelf']), 'box':Box(item['id'], item['quantity'])})
+        self.emptySpaces = []
+        docs = getEmptySpaceCollectionFirebase(numEmptySpaces) if numEmptySpaces != 0 else []
+        for doc in docs:
+            item = doc.to_dict()
+            self.emptySpaces.append(Place(item['location'], item['shelf']))
+        self.addToEmptySpaces = []
+        self.updatedStorage = []
 
     def insertBox(self, place, box):
-        self.storage[place.location][place.shelf] = box
-        self.emptySpaces.remove(place)
+        self.storage.append({'place':place, 'box':box})
+        for emptySpace in self.emptySpaces:
+            if emptySpace == place:
+                self.emptySpaces.remove(emptySpace)
+                return
     
     def isEmpty(self, place):
-        return self.storage[place.location][place.shelf].id == -1
+        return place in (item[0] for item in self.storage)
     
     def removeProducts(self, place, quantity):
-        product = self.storage[place.location][place.shelf]
-        product.removeProducts(quantity)
-        if product.isEmpty():
-            self.storage[place.location][place.shelf] = Box()
-            self.emptySpaces.append(place)
+        for item in self.storage:
+            if item['place'] == place:
+                item['box'].quantity -= quantity
+                if item['box'].quantity == 0:
+                    self.storage.remove(item)
+                    self.addToEmptySpaces.append(place)
+                else:
+                    self.updatedStorage.append(item)
 
 class Env(object):
     def __init__(self, BoxesToInsert):
-        warehouse = Warehouse()
-        #set warehouse from firebase
-        self.state = State(warehouse, BoxesToInsert)
-        sorted([(Place(location, shelf), WarehouseMapping().fromEntrance(Place(location, shelf))) \
-                                   for shelf in range(SHELFS) for location in range(LOCATIONS)], key=lambda place: place[2])
-        self.actions = warehouse[:len(BoxesToInsert)*10]
+        self.state = State(BoxesToInsert)
+        actions = sorted([(emptyPlace, WarehouseMapping().fromEntrance(emptyPlace)) for emptyPlace in self.state.warehouse.emptySpaces], key=lambda obj: obj[1])
+        self.actions = [action[0] for action in actions[:len(BoxesToInsert)*10]]
     
     def step(self, action):
         self.state.insertBox(action)
         self.actions.remove(action)
-        return self.state
 
+    def getFiledPlaces(self):
+        return [insertedBox["place"] for insertedBox in self.state.insertedBoxes]
+    
+    def getFiledBoxes(self):
+        return self.state.insertedBoxes
 
-def saveEmptySpaces(listOfPlaces):
-    fd = open(DIR_EMPTY_SPACES, 'w+')
-    for place in listOfPlaces:
-        place_json = json.dumps(place.__dict__)
-        fd.write(place_json)
-        fd.write(", ")
-    fd.close()
+def saveEmptySpaces(FiledPlaces, remove=True):
+    for place in FiledPlaces:
+        if remove:
+            updateEmptySpaces(place, delete=True)
+        else:
+            updateStorageCollectionFirebase(place, None, delete=True)
+            updateEmptySpaces(place)
 
-def recoverEmptySpaces():
-    listOfPlaces = []
-    fd = open(DIR_EMPTY_SPACES, 'r')
-    data_string = fd.read()
-    data_list = ast.literal_eval(data_string)
-    for item in data_list:
-        listOfPlaces.append(Place(item["location"], item["shelf"]))
-    fd.close()
-    return listOfPlaces   
-
-def saveStorage(storage: list[list[Box]]):
-    fd = open(DIR_STORAGE, "w+")
-    for i in storage:
-        fd.write( "[")    
-        for j in i:
-            j_l = json.dumps(j.__dict__)
-            fd.write(j_l)
-            fd.write( " , ")
-        fd.write( " ] , ")
-    fd.close()
-
-def recoverStorage():
-    fd = open(DIR_STORAGE, "r")
-    storageString = fd.read()
-    fd.close()
-    locationsTuple = ast.literal_eval(storageString)
-    storage = []
-    for i, location in enumerate(locationsTuple):
-        shelfList = []
-        for box in location:
-            shelfList.append(Box(box["location"], box["shelf"]))
-        storage.append(shelfList)
-    return storage
+def saveStorage(FiledBoxes):
+    for box in FiledBoxes:
+        updateStorageCollectionFirebase(box['place'], box['box'])

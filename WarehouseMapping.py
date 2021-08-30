@@ -1,5 +1,6 @@
 import numpy as np
 import itertools
+from typing import List, Set, Dict, Tuple, Optional
 
 AISLES = 8
 SHELFS = 5
@@ -7,6 +8,7 @@ LOCATIONS_PER_AISLE = 100
 FACTOR_LOC = 2
 FACTOR_AISLE = 5
 ENTRANCE = 300
+PICKER_VELOCITY = 1.4  # m/s (3.6 km/h = 1 m/s)
 
 LOCATIONS = AISLES*LOCATIONS_PER_AISLE
 NUM_OF_PLACES = AISLES*SHELFS*LOCATIONS_PER_AISLE
@@ -22,6 +24,9 @@ class Place(object):
         return False
 
     def __str__(self):
+        return '(' + str(self.location) + ', ' + str(self.shelf) + ')'
+
+    def __repr__(self):
         return '(' + str(self.location) + ', ' + str(self.shelf) + ')'
 
     def inWarehouse(self):
@@ -121,8 +126,18 @@ class WarehouseMapping(object):
             calculated_dist += self._Shelfs1DMap[place2.shelf] + self._Shelfs1DMap[place1.shelf]
         return calculated_dist
 
+    def distanceToTime(self, d):
+        return float(d)/float(PICKER_VELOCITY)
 
-
+    def distanceList(self, places: List[Place]):
+        total_distance = 0
+        for i in range(len(places)):
+            if i == 0:
+                total_distance += self.fromEntrance(places[i])
+            else:
+                if i != len(places)-1:
+                    total_distance += self.distance(places[i], places[i+1], walk_dist=True)
+        return self.distanceToTime(total_distance)
 """
 if __name__ == '__main__':
     mapping = WarehouseMapping(calculate_loc2Dmatrix=True)
