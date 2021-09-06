@@ -40,6 +40,12 @@ class Box(object):
     def id(self):
         return self.id
 
+    def __str__(self):
+        return '(' + str(self.id) + ', ' + str(self.quantity) + ')'
+
+    def __repr__(self):
+        return '(' + str(self.id) + ', ' + str(self.quantity) + ')'
+
 class Warehouse(object):
     def __init__(self, size, itemsToRemove=None):
         """
