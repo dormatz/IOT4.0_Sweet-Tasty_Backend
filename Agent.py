@@ -48,6 +48,7 @@ def getBestState(BoxesToInsert, warehouse=None):
         if not_changed == max_itr:
             return best_env, best_state, best_reward
 
+
 def getRemovedPlaces(itemsToRemove, warehouse=None):
     warehouse = Warehouse(0) if warehouse is None else warehouse
     boxesForEachId = []

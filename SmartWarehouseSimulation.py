@@ -1,6 +1,6 @@
-from Agent import getBestState
+from Agent import getBestState, getRemovedPlaces
 import WarehouseMapping
-from WarehouseMapping import LOCATIONS, SHELFS
+from WarehouseMapping import LOCATIONS, SHELFS, WarehouseMapping
 from Env import Place, Env
 
 
@@ -12,7 +12,7 @@ class SmartWarehouse():
             for j in range(SHELFS):
                 self.emptySpaces.append(Place(i, j))
     
-    def insertBoxes(self, boxes):
+    def insertBoxes(self, boxesToInsert):
         best_env, best_state, best_reward = getBestState(boxesToInsert, self)
         filledPlaces = best_env.getFiledPlaces()
         filledBoxes = best_env.getFiledBoxes()
@@ -22,7 +22,7 @@ class SmartWarehouse():
         wm = WarehouseMapping()
         return wm.distanceList(filledPlaces)
     
-    def removeProducts(self, boxes):
+    def removeProducts(self, boxesToRemove):
         places, emptySpaces, RemovedStorage = getRemovedPlaces(boxesToRemove, self)
         self.emptySpaces.extend(emptySpaces)
         wm = WarehouseMapping()
