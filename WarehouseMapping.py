@@ -14,9 +14,18 @@ LOCATIONS = AISLES*LOCATIONS_PER_AISLE
 NUM_OF_PLACES = AISLES*SHELFS*LOCATIONS_PER_AISLE
 
 class Place(object):
-    def __init__(self, location, shelf):
+    def __init__(self, location: int, shelf: int):
         self.location = location
         self.shelf = shelf
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        else:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __eq__(self, other_place):
         if isinstance(other_place, Place):

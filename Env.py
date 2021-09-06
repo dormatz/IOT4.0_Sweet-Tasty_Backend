@@ -7,13 +7,13 @@ from firebase_con import getEmptySpaceCollectionFirebase, getStorageCollectionFi
 from copy import deepcopy
 
 class State(object):
-    def __init__(self, boxesToInsert):
+    def __init__(self, boxesToInsert, warehouse=None):
         """
         WareHouse- Warehouse element
         insertedBoxes- list of dicts of {Place, Box} elements
         boxesToInsert- list of Box elements
         """
-        self.warehouse = Warehouse(len(boxesToInsert)*10)
+        self.warehouse = Warehouse(len(boxesToInsert)*10) if warehouse is None else warehouse
         self.boxesToInsert = deepcopy(boxesToInsert)
         self.insertedBoxes = []
 
@@ -36,18 +36,12 @@ class Box(object):
     
     def isEmpty(self):
         return self.quantity == 0
-    
+
     def id(self):
         return self.id
 
-    def __str__(self):
-        return '(' + str(self.id) + ', ' + str(self.quantity) + ')'
-
-    def __repr__(self):
-        return '(' + str(self.id) + ', ' + str(self.quantity) + ')'
-
 class Warehouse(object):
-    def __init__(self, numEmptySpaces, itemsToRemove=None):
+    def __init__(self, size, itemsToRemove=None):
         """
         *The warehouse starts empty.
         *storage- list (which represents location) of list (which reperesnts shelf) of (Place, Box) = (location, shelf, id, quantity)
@@ -60,10 +54,10 @@ class Warehouse(object):
         else:
             docs = getStorageCollectionFirebase()
         for doc in docs:
-            item = doc.to_dict()            
+            item = doc.to_dict()
             self.storage.append({'place':Place(item['location'],item['shelf']), 'box':Box(item['id'], item['quantity'])})
         self.emptySpaces = []
-        docs = getEmptySpaceCollectionFirebase(numEmptySpaces) if numEmptySpaces != 0 else []
+        docs = getEmptySpaceCollectionFirebase(size) if size != 0 else []
         for doc in docs:
             item = doc.to_dict()
             self.emptySpaces.append(Place(item['location'], item['shelf']))
@@ -89,10 +83,11 @@ class Warehouse(object):
                     self.addToEmptySpaces.append(place)
                 else:
                     self.updatedStorage.append(item)
+                return
 
 class Env(object):
-    def __init__(self, BoxesToInsert):
-        self.state = State(BoxesToInsert)
+    def __init__(self, BoxesToInsert, warehouse=None):
+        self.state = State(BoxesToInsert, warehouse)
         actions = sorted([(emptyPlace, WarehouseMapping().fromEntrance(emptyPlace)) for emptyPlace in self.state.warehouse.emptySpaces], key=lambda obj: obj[1])
         self.actions = [action[0] for action in actions[:len(BoxesToInsert)*10]]
     
@@ -102,7 +97,7 @@ class Env(object):
 
     def getFiledPlaces(self):
         return [insertedBox["place"] for insertedBox in self.state.insertedBoxes]
-    
+
     def getFiledBoxes(self):
         return self.state.insertedBoxes
 
