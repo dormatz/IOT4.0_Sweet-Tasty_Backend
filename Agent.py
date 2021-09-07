@@ -21,21 +21,23 @@ class Agent(object):
         action_index = torch.multinomial(actions_probs, 1).item()
         action = self.env.actions[action_index]
         self.env.step(action)
-        self.total_reward += self.rewardCalc(action)
+        inserted_box = self.env.state.insertedBoxes[-1]
+        #dict of 'place' and 'box'
+        self.total_reward += rewardCalc(inserted_box)
 
     def fullSteps(self):
         while not self.env.state.isDone():
             self.step()
         return self.env, self.env.state, self.total_reward
 
-    def rewardCalc(self, action):
+    def rewardCalc(inserted_box):
+        #dict of 'place' and 'box'
         return 1
 
 
 def getBestState(BoxesToInsert, warehouse=None):
     agent = Agent(BoxesToInsert, warehouse)
     best_env, best_state, best_reward = agent.fullSteps()
-    return best_env, best_state, best_reward
     not_changed = 0
     while True:
         agent = Agent(BoxesToInsert)
