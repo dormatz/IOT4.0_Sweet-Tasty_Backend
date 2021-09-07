@@ -56,7 +56,10 @@ def getRemovedPlaces(itemsToRemove, warehouse=None):
     boxesForEachId = []
     for item in itemsToRemove:
         boxes = [[Place(box['place'].location, box['place'].shelf)] for box in warehouse.storage if box['box'].id == item.id and box['box'].quantity >= item.quantity]
-        boxesForEachId.append({'itemId':item.id, 'boxes':boxes})
+        if len(boxes):
+            boxesForEachId.append({'itemId':item.id, 'boxes':boxes})
+        else:
+            itemsToRemove.Remove(item)
 
     boxesOptions = boxesForEachId[0]['boxes']
     for item in boxesForEachId[1:]:
