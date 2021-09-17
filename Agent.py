@@ -4,16 +4,17 @@ import torch
 from Env import Env, Warehouse, Box
 from WarehouseMapping import WarehouseMapping, Place
 from TSP import TSPsolver
+from typing import List, Dict, Tuple, Optional
 import json
 
 max_itr = 10
 
-def rewardCalc(storage, inserted_box):
+def rewardCalc(storage: List[Dict[Place, Box]], inserted_box: Dict[Place, Box]):
     #dict of 'place' and 'box'
     return 1
 
 class Agent(object):
-    def __init__(self, BoxesToInsert, warehouse):
+    def __init__(self, BoxesToInsert: List[Box], warehouse: Warehouse):
         self.env = Env(deepcopy(BoxesToInsert), warehouse)
         self.total_reward = 0
         self.policy = {self.env.state: { "actions_probability": torch.nn.functional.softmax(torch.rand(len(self.env.actions)), dim=0) } }
@@ -36,7 +37,7 @@ class Agent(object):
         return self.env, self.env.state, self.total_reward
 
 
-def getBestState(BoxesToInsert, warehouse=None):
+def getBestState(BoxesToInsert: List[Box], warehouse=None):
     agent = Agent(BoxesToInsert, warehouse)
     best_env, best_state, best_reward = agent.fullSteps()
     not_changed = 0
@@ -53,7 +54,7 @@ def getBestState(BoxesToInsert, warehouse=None):
             return best_env, best_state, best_reward
 
 
-def getRemovedPlaces(itemsToRemove, warehouse=None):
+def getRemovedPlaces(itemsToRemove: List[Box], warehouse=None):
     warehouse = Warehouse(0) if warehouse is None else warehouse
     boxesForEachId = []
     itemNotFound = []
@@ -83,8 +84,3 @@ def getRemovedPlaces(itemsToRemove, warehouse=None):
     for i in range(len(chosenOption)):
         warehouse.removeProducts(chosenOption[i], itemsToRemove[i].quantity)
     return chosenOption, warehouse.addToEmptySpaces, warehouse.updatedStorage
-
-def relevantBox(box: Box, items):
-    for item in items:
-        if item.id == box.id and item.quantity <= box.quantity:
-            return True

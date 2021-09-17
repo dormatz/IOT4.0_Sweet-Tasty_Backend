@@ -5,26 +5,7 @@ import json
 import os
 from firebase_con import getEmptySpaceCollectionFirebase, getStorageCollectionFirebase, updateStorageCollectionFirebase, updateEmptySpaces
 from copy import deepcopy
-
-class State(object):
-    def __init__(self, boxesToInsert, warehouse=None):
-        """
-        WareHouse- Warehouse element
-        insertedBoxes- list of dicts of {Place, Box} elements
-        boxesToInsert- list of Box elements
-        """
-        self.warehouse = Warehouse(len(boxesToInsert)*10) if warehouse is None else warehouse
-        self.boxesToInsert = deepcopy(boxesToInsert)
-        self.insertedBoxes = []
-
-    def isDone(self):
-        return len(self.boxesToInsert) == 0
-
-    def insertBox(self, place):
-        box = self.boxesToInsert[0]
-        self.warehouse.insertBox(place, box)
-        self.insertedBoxes.append({"place":place, "box":box})
-        self.boxesToInsert.pop(0)
+from typing import List, Dict, Tuple, Optional
 
 class Box(object):
     def __init__(self, id=-1, quantity=0):
@@ -46,8 +27,30 @@ class Box(object):
     def __repr__(self):
         return '(' + str(self.id) + ', ' + str(self.quantity) + ')'
 
+
+class State(object):
+    def __init__(self, boxesToInsert: List[Box], warehouse=None):
+        """
+        WareHouse- Warehouse element
+        insertedBoxes- list of dicts of {Place, Box} elements
+        boxesToInsert- list of Box elements
+        """
+        self.warehouse = Warehouse(len(boxesToInsert)*10) if warehouse is None else warehouse
+        self.boxesToInsert = deepcopy(boxesToInsert)
+        self.insertedBoxes = []
+
+    def isDone(self):
+        return len(self.boxesToInsert) == 0
+
+    def insertBox(self, place):
+        box = self.boxesToInsert[0]
+        self.warehouse.insertBox(place, box)
+        self.insertedBoxes.append({"place":place, "box":box})
+        self.boxesToInsert.pop(0)
+
+
 class Warehouse(object):
-    def __init__(self, size, itemsToRemove=None):
+    def __init__(self, size: int, itemsToRemove: List[Box]=None):
         """
         *The warehouse starts empty.
         *storage- list of dictionaries with keys -  place: Place(), box:Box()
@@ -92,7 +95,7 @@ class Warehouse(object):
                 return
 
 class Env(object):
-    def __init__(self, BoxesToInsert, warehouse=None):
+    def __init__(self, BoxesToInsert: List[Box], warehouse=None):
         self.state = State(BoxesToInsert, warehouse)
         actions = sorted([(emptyPlace, WarehouseMapping().fromEntrance(emptyPlace)) for emptyPlace in self.state.warehouse.emptySpaces], key=lambda obj: obj[1])
         self.actions = [action[0] for action in actions[:len(BoxesToInsert)*10]]
@@ -107,7 +110,7 @@ class Env(object):
     def getFilledBoxes(self):
         return self.state.insertedBoxes
 
-def saveEmptySpaces(FiledPlaces, remove=True):
+def saveEmptySpaces(FiledPlaces: List[Place], remove=True):
     for place in FiledPlaces:
         if remove:
             updateEmptySpaces(place, delete=True)
@@ -115,6 +118,6 @@ def saveEmptySpaces(FiledPlaces, remove=True):
             updateStorageCollectionFirebase(place, None, delete=True)
             updateEmptySpaces(place)
 
-def saveStorage(FiledBoxes):
+def saveStorage(FiledBoxes: List[Box]):
     for box in FiledBoxes:
         updateStorageCollectionFirebase(box['place'], box['box'])
