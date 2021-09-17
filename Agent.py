@@ -5,6 +5,7 @@ import pandas as pd
 from Env import Env, Warehouse, Box
 from WarehouseMapping import WarehouseMapping, Place
 from TSP import TSPsolver
+from typing import List, Dict, Tuple, Optional
 import json
 import pickle
 from copy import deepcopy
@@ -48,15 +49,12 @@ def rewardCalc(storage, inserted_box):
     return -1*best_time
 
 class Agent(object):
-    def __init__(self, BoxesToInsert, warehouse):
+    def __init__(self, BoxesToInsert: List[Box], warehouse: Warehouse):
         self.env = Env(deepcopy(BoxesToInsert), warehouse)
         self.total_reward = 0
-        self.policy = {self.env.state: { "actions_probability": torch.nn.functional.softmax(torch.rand(len(self.env.actions)), dim=0) } }
 
     def step(self):
-        if self.env.state not in self.policy:
-            self.policy.append({self.env.state: { "actions_probability": torch.nn.functional.softmax(torch.rand(len(self.env.actions)), dim=0) } })
-        actions_probs = self.policy[self.env.state]["actions_probability"]
+        actions_probs = torch.nn.functional.softmax(torch.rand(len(self.env.actions)), dim=0)
         action_index = torch.multinomial(actions_probs, 1).item()
         action = self.env.actions[action_index]
         self.env.step(action)
@@ -71,7 +69,7 @@ class Agent(object):
         return self.env, self.env.state, self.total_reward
 
 
-def getBestState(BoxesToInsert, warehouse=None):
+def getBestState(BoxesToInsert: List[Box], warehouse=None):
     agent = Agent(BoxesToInsert, warehouse)
     best_env, best_state, best_reward = agent.fullSteps()
     not_changed = 0
@@ -88,12 +86,13 @@ def getBestState(BoxesToInsert, warehouse=None):
             return best_env, best_state, best_reward
 
 
-def getRemovedPlaces(itemsToRemove, warehouse=None):
+def getRemovedPlaces(itemsToRemove: List[Box], warehouse=None):
     warehouse = Warehouse(0) if warehouse is None else warehouse
     boxesForEachId = []
     itemNotFound = []
     for item in itemsToRemove:
         boxes = [[Place(box['place'].location, box['place'].shelf)] for box in warehouse.storage if box['box'].id == item.id and box['box'].quantity >= item.quantity]
+        boxes = random.choices(boxes, k=3)
         if len(boxes):
             boxesForEachId.append({'itemId':item.id, 'boxes':boxes})
         else:
@@ -112,14 +111,7 @@ def getRemovedPlaces(itemsToRemove, warehouse=None):
                         #could happen when we want to remove two boxes with same id
                         boxesOptionsWithItem.append(option+[place[0]])
             boxesOptions = boxesOptionsWithItem
-        chosenOption = min(boxesOptions, key=lambda obj: TSPsolver(obj)[1])
-    else:
-        chosenOption = boxesOptions
+    chosenOption = min(deepcopy(boxesOptions), key=lambda obj: TSPsolver(deepcopy(obj))[1])
     for i in range(len(chosenOption)):
         warehouse.removeProducts(chosenOption[i], itemsToRemove[i].quantity)
     return chosenOption, warehouse.addToEmptySpaces, warehouse.updatedStorage
-
-def relevantBox(box: Box, items):
-    for item in items:
-        if item.id == box.id and item.quantity <= box.quantity:
-            return True
