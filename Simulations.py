@@ -28,29 +28,73 @@ class Simulation:
         df['Quantity'] = df['Quantity'].astype(int)
         inputDF = df.loc[df['Quantity'] > 0]  # 3742. 764 unique
         outputDF = df.loc[df['Quantity'] < 0]  # the rest, something like 80000. 1382 unique
+
+
         # the intersection between the output and the output is 722 products_id, which is good.
         relevantIDs = np.intersect1d(np.unique(inputDF['Product_ID'].values),
                        np.unique(outputDF['Product_ID'].values))
+
+        """"Insert setup"""
         # We simulate only with the ID that in the intersection
-        self.boxesToInsert = [Box(id,q) for q,id
+        self._boxesToInsert = [Box(id,q) for q,id
                          in inputDF[['Quantity', 'Product_ID']].values.astype(int)
                          if id in relevantIDs]
 
-        self.boxesToInsert.reverse()
-        # fill random boxes to insert based on random sampling from existing ones
+        self._boxesToInsert.reverse()
+        # fill random boxes to insert based on random sampling from existing ones so that the number of boxes will fill the warehouse
         k_to_fill = NUM_OF_PLACES-len(relevantIDs)-5
         idChoices = random.choices(relevantIDs, k=NUM_OF_PLACES-len(relevantIDs)-5)
         for i in range(k_to_fill):
             m = random.randint(10, 500)
-            j = random.randint(0, len(self.boxesToInsert))
-            self.boxesToInsert.insert(j, Box(idChoices[i], m))
+            j = random.randint(0, len(self._boxesToInsert))
+            self._boxesToInsert.insert(j, Box(idChoices[i], m))
 
-        self.boxesToRemove = [Box(id, -q) for q, id
+        # create the real boxesToInsert which is list of lists. every inner list is a batch for one insertion.
+        i = 0
+        n = len(self._boxesToInsert)
+        self.boxesToInsert = []  # will be list of lists
+        while(i<n):
+            size = random.randint(3, 7)
+            if(i+size > n):
+                size = n-i  # so we wont get out of bounds
+            self.boxesToInsert.append(self._boxesToInsert[i:i+size])
+            i += size
+
+        """"Remove setup"""
+        # dropping duplicates of products which happens more than once in the same day
+        for i, d in enumerate(outputDF.groupby(by=['Date'])):
+            if i == 0:
+                resDF = pd.DataFrame(d[1].drop_duplicates('Product_ID'))
+            else:
+                resDF = resDF.append(d[1].drop_duplicates('Product_ID'))
+
+        outputDF = resDF
+        outputDF.to_pickle("./outputDF.pkl")
+
+        self._boxesToRemove = [Box(id, -q) for q, id
                          in outputDF[['Quantity', 'Product_ID']].values.astype(int)
                          if id in relevantIDs]
-        self.boxesToRemove.reverse()
+        self._boxesToRemove.reverse()
+        i = 0
+        n = len(self._boxesToRemove)
+        self.boxesToRemove = []  # will be list of lists
+        while (i < n):
+            size = random.randint(3, 7)
+            if (i + size > n):
+                size = n - i  # so we wont get out of bounds
+            self.boxesToRemove.append(self._boxesToRemove[i:i + size])
+            i += size
+
 
         # self.boxesToRemove = random.sample(boxesToRemove, k=len(boxesToRemove))
+
+        # for every product, in how many days it gets removed out of the warehouse (num_of_days)
+        oDF = outputDF.drop_duplicates('Product_ID')
+        oDF = oDF['Product_ID'].values
+        oDF = [i for i in oDF if i in relevantIDs]
+        num_of_days = []
+        for id in oDF:
+            num_of_days.append(len(outputDF.loc[outputDF['Product_ID'] == id].drop_duplicates('Date')))
 
     def run(self):
         for listOfBoxes in self.boxesToInsert:
@@ -65,7 +109,6 @@ class Simulation:
             self.smart_remove_times.append(self.smartWarehouse.removeProducts(listOfBoxes))
             self.greedy_remove_times.append(self.greedyWarehouse.removeProducts(listOfBoxes))
             self.random_remove_times.append(self.randomWarehouse.removeProducts(listOfBoxes))
-
 
     def showResults(self):
         smart_better_than_greedy = 0
@@ -124,3 +167,8 @@ class Simulation:
         plt.title('Removal times')
         plt.show()
 
+if __name__ == '__main__':
+    s= Simulation()
+    s.setup()
+    x = 0
+    print(s.boxesToRemove[0])

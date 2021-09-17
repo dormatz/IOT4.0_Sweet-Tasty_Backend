@@ -1,16 +1,51 @@
 import random
 from copy import deepcopy
 import torch
+import pandas as pd
 from Env import Env, Warehouse, Box
 from WarehouseMapping import WarehouseMapping, Place
 from TSP import TSPsolver
 import json
+import pickle
+from copy import deepcopy
+import math
 
 max_itr = 10
 
 def rewardCalc(storage, inserted_box):
-    #dict of 'place' and 'box'
-    return 1
+    # get days that the Box was removed and boxes that were remove with it.
+    # create groups of items that were removed with the Box in couple of different days.
+    # preform TSP on all those group and pick the fastest.
+    # return the -1*best_time as the reward.
+
+    box = inserted_box['box']
+    id = box.id
+    insertedPlace = inserted_box['place']
+    outputDF = pd.read_pickle("./outputDF.pkl")
+    batches = []  # list of lists of Boxes
+    k = 2
+    removeDB = deepcopy(outputDF.values)
+    n = len(removeDB)
+    found = 0
+    limit_found = 5
+    for i, row in enumerate(outputDF.values):
+        if row[2] == id:
+            found += 1
+            new_batch = []
+            for row in removeDB[max(i-k, 0):min(i+k, n)]:
+                if row[2] == id:
+                    continue
+                new_batch.append(Box(row[2], -1*row[1]))
+            batches.append(new_batch)
+            if (found >= limit_found):
+                break
+    best_time = math.inf
+    for batch in batches:
+        cur_time = rewardBatchCalc(batch, storage, insertedPlace)
+        if best_time > cur_time:
+            best_time = cur_time
+
+    return -1*best_time
 
 class Agent(object):
     def __init__(self, BoxesToInsert, warehouse):
