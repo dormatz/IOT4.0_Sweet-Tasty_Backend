@@ -4,6 +4,7 @@ from Env import Box, saveEmptySpaces, saveStorage
 from Agent import getBestState, getRemovedPlaces
 from firebase_con import setEmptySpaces
 from WarehouseMapping import WarehouseMapping
+from TSP import TSPsolver
 import json
 
 app = Flask(__name__)
@@ -44,11 +45,13 @@ def remove():
     if args['ids'] is None or len(ids) == 0: return ""
     for i in range(len(ids)):
         boxesToRemove.insert(0, Box(ids[i], quantities[i]))
-    places, emptySpaces, RemovedStorage = getRemovedPlaces(boxesToRemove)
+    removedPlaces = getRemovedPlaces(boxesToRemove)
+    if removedPlaces is None:
+        return "None exist"
+    places, emptySpaces, RemovedStorage = removedPlaces
     saveStorage(RemovedStorage)
     saveEmptySpaces(emptySpaces, remove=False)
-    wm = WarehouseMapping()
-    tspPlaces = wm.TSPsolver(places)
+    tspPlaces, _ = TSPsolver(places)
     pri = '{'
     for i, place in enumerate(tspPlaces):
         indexInPlaces = places.index(place)
