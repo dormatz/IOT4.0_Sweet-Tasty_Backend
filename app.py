@@ -5,6 +5,7 @@ from Agent import getBestState, getRemovedPlaces
 from firebase_con import setEmptySpaces
 from WarehouseMapping import WarehouseMapping
 from TSP import TSPsolver
+from copy import deepcopy
 import json
 
 app = Flask(__name__)
@@ -27,9 +28,11 @@ def insert():
     filledBoxes = best_env.getFilledBoxes()
     saveStorage(filledBoxes)
     saveEmptySpaces(filledPlaces)
+    tspPlaces, _ = TSPsolver(deepcopy(filledPlaces))
     pri = '{'
     for i, box in enumerate(filledBoxes):
-        pri += f"'{i}':[{box['place'].location}, {box['place'].shelf}]"
+        index = tspPlaces.index(filledPlaces[i])
+        pri += f"'{i}':[{box['place'].location}, {box['place'].shelf}, {index}]"
     pri += '}'
     return pri
 
@@ -51,7 +54,7 @@ def remove():
     places, emptySpaces, RemovedStorage = removedPlaces
     saveStorage(RemovedStorage)
     saveEmptySpaces(emptySpaces, remove=False)
-    tspPlaces, _ = TSPsolver(places)
+    tspPlaces, _ = TSPsolver(deepcopy(places))
     pri = '{'
     for i, place in enumerate(tspPlaces):
         indexInPlaces = places.index(place)

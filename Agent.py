@@ -17,12 +17,9 @@ class Agent(object):
     def __init__(self, BoxesToInsert: List[Box], warehouse: Warehouse):
         self.env = Env(deepcopy(BoxesToInsert), warehouse)
         self.total_reward = 0
-        self.policy = {self.env.state: { "actions_probability": torch.nn.functional.softmax(torch.rand(len(self.env.actions)), dim=0) } }
 
     def step(self):
-        if self.env.state not in self.policy:
-            self.policy.append({self.env.state: { "actions_probability": torch.nn.functional.softmax(torch.rand(len(self.env.actions)), dim=0) } })
-        actions_probs = self.policy[self.env.state]["actions_probability"]
+        actions_probs = torch.nn.functional.softmax(torch.rand(len(self.env.actions)), dim=0)
         action_index = torch.multinomial(actions_probs, 1).item()
         action = self.env.actions[action_index]
         self.env.step(action)
@@ -78,9 +75,7 @@ def getRemovedPlaces(itemsToRemove: List[Box], warehouse=None):
                         #could happen when we want to remove two boxes with same id
                         boxesOptionsWithItem.append(option+[place[0]])
             boxesOptions = boxesOptionsWithItem
-        chosenOption = min(boxesOptions, key=lambda obj: TSPsolver(obj)[1])
-    else:
-        chosenOption = boxesOptions
+    chosenOption = min(deepcopy(boxesOptions), key=lambda obj: TSPsolver(deepcopy(obj))[1])
     for i in range(len(chosenOption)):
         warehouse.removeProducts(chosenOption[i], itemsToRemove[i].quantity)
     return chosenOption, warehouse.addToEmptySpaces, warehouse.updatedStorage
