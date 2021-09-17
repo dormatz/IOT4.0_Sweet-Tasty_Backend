@@ -4,7 +4,7 @@ from WarehouseMapping import LOCATIONS, SHELFS, WarehouseMapping
 from Env import Place, Env
 
 
-class SmartWarehouse():
+class SmartWarehouse:
     def __init__(self):
         self.storage = []
         self.emptySpaces = []
@@ -14,8 +14,8 @@ class SmartWarehouse():
     
     def insertBoxes(self, boxesToInsert):
         best_env, best_state, best_reward = getBestState(boxesToInsert, self)
-        filledPlaces = best_env.getFiledPlaces()
-        filledBoxes = best_env.getFiledBoxes()
+        filledPlaces = best_env.getFilledPlaces()
+        filledBoxes = best_env.getFilledBoxes()
         for filledPlace in filledPlaces:
             self.emptySpaces.remove(filledPlace)
         self.storage.extend(filledBoxes)

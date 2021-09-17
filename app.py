@@ -22,8 +22,8 @@ def insert():
     for i in range(len(ids)):
         boxesToInsert.insert(0, Box(ids[i], quantities[i]))
     best_env, best_state, best_reward = getBestState(boxesToInsert)
-    filledPlaces = best_env.getFiledPlaces()
-    filledBoxes = best_env.getFiledBoxes()
+    filledPlaces = best_env.getFilledPlaces()
+    filledBoxes = best_env.getFilledBoxes()
     saveStorage(filledBoxes)
     saveEmptySpaces(filledPlaces)
     pri = '{'

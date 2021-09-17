@@ -50,7 +50,7 @@ class Warehouse(object):
     def __init__(self, size, itemsToRemove=None):
         """
         *The warehouse starts empty.
-        *storage- list (which represents location) of list (which reperesnts shelf) of (Place, Box) = (location, shelf, id, quantity)
+        *storage- list of dictionaries with keys -  place: Place(), box:Box()
         emptySpaces- list of all empty Place() elements.
         """
         self.storage = []
@@ -101,10 +101,10 @@ class Env(object):
         self.state.insertBox(action)
         self.actions.remove(action)
 
-    def getFiledPlaces(self):
+    def getFilledPlaces(self):
         return [insertedBox["place"] for insertedBox in self.state.insertedBoxes]
 
-    def getFiledBoxes(self):
+    def getFilledBoxes(self):
         return self.state.insertedBoxes
 
 def saveEmptySpaces(FiledPlaces, remove=True):

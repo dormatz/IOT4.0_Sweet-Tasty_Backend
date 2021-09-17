@@ -35,16 +35,16 @@ class Agent(object):
 def getBestState(BoxesToInsert, warehouse=None):
     agent = Agent(BoxesToInsert, warehouse)
     best_env, best_state, best_reward = agent.fullSteps()
-    return best_env, best_state, best_reward
     not_changed = 0
     while True:
-        agent = Agent(BoxesToInsert)
+        agent = Agent(BoxesToInsert, warehouse)
         curr_env, curr_state, curr_reward = agent.fullSteps()
         if curr_reward > best_reward:
             best_reward = curr_reward
             best_state = curr_state
             best_env = curr_env
-        else: not_changed +=1
+        else:
+            not_changed +=1
         if not_changed == max_itr:
             return best_env, best_state, best_reward
 

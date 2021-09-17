@@ -5,6 +5,7 @@ import random
 from WarehouseMapping import NUM_OF_PLACES
 from time import time
 from SimulatedWarehouses import GreedyWarehouse, RandomWarehouse
+from SmartWarehouseSimulation import SmartWarehouse
 import matplotlib.pyplot as plt
 from tabulate import tabulate
 
