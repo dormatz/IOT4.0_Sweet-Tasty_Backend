@@ -21,14 +21,17 @@ class Agent(object):
         action_index = torch.multinomial(actions_probs, 1).item()
         action = self.env.actions[action_index]
         self.env.step(action)
-        self.total_reward += self.rewardCalc(action)
+        inserted_box = self.env.state.insertedBoxes[-1]
+        #dict of 'place' and 'box'
+        self.total_reward += rewardCalc(inserted_box)
 
     def fullSteps(self):
         while not self.env.state.isDone():
             self.step()
         return self.env, self.env.state, self.total_reward
 
-    def rewardCalc(self, action):
+    def rewardCalc(inserted_box):
+        #dict of 'place' and 'box'
         return 1
 
 
@@ -54,7 +57,10 @@ def getRemovedPlaces(itemsToRemove, warehouse=None):
     boxesForEachId = []
     for item in itemsToRemove:
         boxes = [[Place(box['place'].location, box['place'].shelf)] for box in warehouse.storage if box['box'].id == item.id and box['box'].quantity >= item.quantity]
-        boxesForEachId.append({'itemId':item.id, 'boxes':boxes})
+        if len(boxes):
+            boxesForEachId.append({'itemId':item.id, 'boxes':boxes})
+        else:
+            itemsToRemove.Remove(item)
 
     boxesOptions = boxesForEachId[0]['boxes']
     for item in boxesForEachId[1:]:
