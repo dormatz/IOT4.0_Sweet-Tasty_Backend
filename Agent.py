@@ -48,6 +48,36 @@ def rewardCalc(storage, inserted_box):
 
     return -1*best_time
 
+def rewardBatchCalc(batch: List[Box], storage, insertedPlace: Place):
+    boxesForEachId = []
+    itemNotFound = []
+    for item in batch:
+        boxes = [[Place(box['place'].location, box['place'].shelf)] for box in storage if box['box'].id == item.id and box['box'].quantity >= item.quantity \
+                            and not box['place']==insertedPlace]
+        boxes = random.choices(boxes, k=3)
+        if len(boxes):
+            boxesForEachId.append({'itemId':item.id, 'boxes':boxes})
+        else:
+            itemNotFound.append(item)
+    for item in itemNotFound:
+        batch.remove(item)
+    if len(boxesForEachId) == 0:
+        return TSPsolver([insertedPlace])[1]
+    boxesOptions = boxesForEachId[0]['boxes']
+    if len(boxesForEachId) > 1:
+        for item in boxesForEachId[1:]:
+            boxesOptionsWithItem = []
+            for option in boxesOptions:
+                for place in item['boxes']:
+                    if place[0] not in option:
+                        #could happen when we want to check two boxes with same id
+                        boxesOptionsWithItem.append(option+[place[0]])
+            boxesOptions = boxesOptionsWithItem
+    for option in boxesOptions:
+        option.append(insertedPlace)
+    chosenOption = min(deepcopy(boxesOptions), key=lambda obj: TSPsolver(deepcopy(obj))[1])
+    return TSPsolver(chosenOption)[1]
+
 class Agent(object):
     def __init__(self, BoxesToInsert: List[Box], warehouse: Warehouse):
         self.env = Env(deepcopy(BoxesToInsert), warehouse)
