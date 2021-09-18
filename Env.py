@@ -35,7 +35,7 @@ class State(object):
         insertedBoxes- list of dicts of {Place, Box} elements
         boxesToInsert- list of Box elements
         """
-        self.warehouse = Warehouse(len(boxesToInsert)*10) if warehouse is None else warehouse
+        self.warehouse = Warehouse(len(boxesToInsert)*2) if warehouse is None else warehouse
         self.boxesToInsert = deepcopy(boxesToInsert)
         self.insertedBoxes = []
 

@@ -101,11 +101,11 @@ class Agent(object):
 
 
 def getBestState(BoxesToInsert: List[Box], warehouse=None):
-    agent = Agent(BoxesToInsert, warehouse)
+    agent = Agent(BoxesToInsert, deepcopy(warehouse))
     best_env, best_state, best_reward = agent.fullSteps()
     not_changed = 0
     while True:
-        agent = Agent(BoxesToInsert, warehouse)
+        agent = Agent(BoxesToInsert, deepcopy(warehouse))
         curr_env, curr_state, curr_reward = agent.fullSteps()
         if curr_reward > best_reward:
             best_reward = curr_reward
