@@ -8,6 +8,7 @@ from SimulatedWarehouses import GreedyWarehouse, RandomWarehouse
 from SmartWarehouseSimulation import SmartWarehouse
 import matplotlib.pyplot as plt
 from tabulate import tabulate
+from pathlib import Path
 
 """ Module to run simulations to prove that we do achieve improvements
  This module doesnt runs as a part of the actual "product" so it can be inefficient"""
@@ -24,7 +25,7 @@ class Simulation:
         self.random_remove_times = []
 
     def setup(self):
-        df = pd.read_csv('csvs\Warehouse_traffic.csv')
+        df = pd.read_csv(Path('csvs','Warehouse_traffic.csv'))
         df['Quantity'] = df['Quantity'].astype(int)
         inputDF = df.loc[df['Quantity'] > 0]  # 3742. 764 unique
         outputDF = df.loc[df['Quantity'] < 0]  # the rest, something like 80000. 1382 unique
