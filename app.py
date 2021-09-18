@@ -9,6 +9,7 @@ from copy import deepcopy
 import json
 
 app = Flask(__name__)
+#app.run(host="0.0.0.0")
 
 @app.route('/insert', methods=['POST', 'GET'])
 def insert():
