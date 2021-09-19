@@ -9,6 +9,7 @@ from copy import deepcopy
 import json
 
 app = Flask(__name__)
+#app.run(host="0.0.0.0")
 
 @app.route('/insert', methods=['POST', 'GET'])
 def insert():
@@ -23,7 +24,7 @@ def insert():
     if args['ids'] is None or len(ids) == 0: return ""
     for i in range(len(ids)):
         boxesToInsert.insert(0, Box(ids[i], quantities[i]))
-    best_env, best_state, best_reward = getBestState(boxesToInsert)
+    best_env, _, _ = getBestState(boxesToInsert)
     filledPlaces = best_env.getFilledPlaces()
     filledBoxes = best_env.getFilledBoxes()
     saveStorage(filledBoxes)
