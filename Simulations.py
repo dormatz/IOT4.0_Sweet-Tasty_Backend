@@ -25,6 +25,7 @@ class Simulation:
         self.random_remove_times = []
 
     def setup(self):
+        print("Initializing Simulation")
         df = pd.read_csv(Path('csvs','Warehouse_traffic.csv'))
         df['Quantity'] = df['Quantity'].astype(int)
         inputDF = df.loc[df['Quantity'] > 0]  # 3742. 764 unique
@@ -96,20 +97,31 @@ class Simulation:
         num_of_days = []
         for id in oDF:
             num_of_days.append(len(outputDF.loc[outputDF['Product_ID'] == id].drop_duplicates('Date')))
+        print("Done Initialization")
 
     def run(self):
-        for listOfBoxes in self.boxesToInsert:
+        print("Running")
+        print(len(self.boxesToInsert))
+        for i, listOfBoxes in enumerate(self.boxesToInsert):
+            print(listOfBoxes)
             self.smart_insert_times.append(self.smartWarehouse.insertBoxes(listOfBoxes))
             self.greedy_insert_times.append(self.greedyWarehouse.insertBoxes(listOfBoxes))
             self.random_insert_times.append(self.randomWarehouse.insertBoxes(listOfBoxes))
+            print('-', end="")
 
+        print("Insertion finished")
         self.greedyWarehouse.organizeStorageList()
         self.randomWarehouse.organizeStorageList()
 
-        for listOfBoxes in self.boxesToRemove:
+        print("Starting removal")
+        for i, listOfBoxes in enumerate(self.boxesToRemove):
             self.smart_remove_times.append(self.smartWarehouse.removeProducts(listOfBoxes))
             self.greedy_remove_times.append(self.greedyWarehouse.removeProducts(listOfBoxes))
             self.random_remove_times.append(self.randomWarehouse.removeProducts(listOfBoxes))
+            if i % 10 == 0:
+                print('-', end="")
+
+        print("Removal finished")
 
     def showResults(self):
         smart_better_than_greedy = 0

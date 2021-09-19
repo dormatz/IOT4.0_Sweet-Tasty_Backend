@@ -17,7 +17,7 @@ class SmartWarehouse(Warehouse):
         wm = WarehouseMapping()
         fullEmptySpaces = deepcopy(self.emptySpaces)
         self.emptySpaces.sort(key=lambda obj: wm.fromEntrance(obj))
-        self.emptySpaces = self.emptySpaces[0:10*len(boxesToInsert)]
+        self.emptySpaces = self.emptySpaces[0:2*len(boxesToInsert)]
         best_env, _, _ = getBestState(boxesToInsert, self)
         self.emptySpaces = fullEmptySpaces
         filledPlaces = best_env.getFilledPlaces()
