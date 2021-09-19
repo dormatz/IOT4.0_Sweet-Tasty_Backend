@@ -36,7 +36,8 @@ def insert():
     pri += '}'
     return pri
 
-@app.route('/remove')
+
+@app.route('/remove', methods=['POST', 'GET'])
 def remove():
     parser = reqparse.RequestParser()
     parser.add_argument('ids', type=int, action="append")

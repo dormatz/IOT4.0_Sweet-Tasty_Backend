@@ -168,7 +168,7 @@ class Simulation:
         plt.show()
 
 if __name__ == '__main__':
-    s= Simulation()
+    s = Simulation()
     s.setup()
-    x = 0
-    print(s.boxesToRemove[0])
+    s.run()
+    s.showResults()
