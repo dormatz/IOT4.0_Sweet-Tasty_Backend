@@ -26,6 +26,7 @@ def get_route(manager, routing, solution, index_to_locs):
 
 def print_solution(manager, routing, solution, index_to_locs):
     index = routing.Start(0)
+    index = solution.Value(routing.NextVar(index))
     plan_output = 'Best route found:\n'
     route_distance = 0
     while not routing.IsEnd(index):
@@ -33,9 +34,9 @@ def print_solution(manager, routing, solution, index_to_locs):
         previous_index = index
         index = solution.Value(routing.NextVar(index))
         route_distance += routing.GetArcCostForVehicle(previous_index, index, 0)
-    plan_output += ' {}\n'.format(index_to_locs.get(manager.IndexToNode(index)))
+    # plan_output += ' {}\n'.format(index_to_locs.get(manager.IndexToNode(index)))
     plan_output += 'Route walking distance: {} meters\n'.format(route_distance)
-    print(plan_output)
+    #print(plan_output)
     return route_distance
 
 def findMinimalRoute(places: list):
@@ -83,25 +84,31 @@ def findMinimalRoute(places: list):
     return best_route, route_distance
 
 
+def printBestRoute(route, total_time):
+    plan_output = 'Best route found:\n'
+    for pl in route:
+        plan_output += ' {} ->'.format(pl)
+    plan_output = plan_output[:-3]
+    plan_output += '\n Time = {}'.format(total_time)
+    print(plan_output)
+
 def TSPsolver(places: list):  # list of places
     shelfs = [l.shelf for l in places]
     best_route, total_distance = findMinimalRoute(places)
     sortedPlaces = pairShelfsToBestRoute(best_route, places)
     total_time = (total_distance/PICKER_VELOCITY) + len(best_route)  # a second for each stopping point
+    printBestRoute(sortedPlaces, total_time)
     return sortedPlaces, total_time
 
 def pairShelfsToBestRoute(best_route, places):
     #best_route is list[int], places is list[Place]
-    sortedPairs = []
-    for loc in best_route:
-        for place in places:
-            if loc == place.location:
-                sortedPairs.append(Place(place.location, place.shelf))
-                places.remove(place)
-    return sortedPairs
+    places.pop(0)
+    places.pop(-1)
+    def indexOfLocation(pl):
+        return best_route.index(pl.location)
+    places.sort(key=indexOfLocation)
+    return places
 
 
 if __name__ =='__main__':
-    res, time = TSPsolver([Place(301, 3), Place(200, 4), Place(502, 1)])
-    print(*res)
-    print(time)
+    res, time = TSPsolver([Place(788, 2), Place(200, 4), Place(502, 1), Place(33, 1), Place(2, 1)])
