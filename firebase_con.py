@@ -2,11 +2,12 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from WarehouseMapping import Place, SHELFS, LOCATIONS_PER_AISLE, AISLES, WarehouseMapping
 from Env import Place
-import json
+import os
 
 def connect():
     if not firebase_admin._apps:
-        cred = credentials.Certificate('./sweet-and-testy-firebase-adminsdk-p9msu-bb41457a7f.json')
+        fb_admin = os.path.join(os.path.join(os.getcwd(), 'firebase'), 'sweet-and-testy-firebase-adminsdk-p9msu-bb41457a7f.json')
+        cred = credentials.Certificate(fb_admin)
         firebase_admin.initialize_app(cred, {'projectId': 'sweet-and-testy'})
     return firestore.client()
 

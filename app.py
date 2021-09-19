@@ -33,7 +33,8 @@ def insert():
     pri = '{'
     for i, box in enumerate(filledBoxes):
         index = tspPlaces.index(filledPlaces[i])
-        pri += f"'{i}':[{box['place'].location}, {box['place'].shelf}, {index}]"
+        pri += f"\"{i}\":[{box['place'].location}, {box['place'].shelf}, {index}],"
+    pri = pri[:-1]  # remove the last ,
     pri += '}'
     return pri
 
@@ -57,11 +58,13 @@ def remove():
     saveStorage(RemovedStorage)
     saveEmptySpaces(emptySpaces, remove=False)
     tspPlaces, _ = TSPsolver(deepcopy(places))
+    print(tspPlaces)
+    print(places)
     pri = '{'
     for i, place in enumerate(tspPlaces):
-        indexInPlaces = places.index(place)
-        pri += f"'{i}':"+"{"+f"'id':{ids[indexInPlaces]}, 'q':{quantities[indexInPlaces]}, \
-             'location':{place.location}, 'shelf':{place.shelf}"+"}"
+        indexInPlaces = places.index(place)  # bug in here! when the loc is 300 the place in not in the places list. (300,1) is neither in storage nor in emptySpaces
+        pri += f"\"{i}\":"+"{"+f"\"id\":{ids[indexInPlaces]}, \"q\":{quantities[indexInPlaces]}, \"location\":{place.location}, \"shelf\":{place.shelf}"+"},"
+    pri = pri[:-1]  # remove the last ,
     pri += '}'
     return pri
 
