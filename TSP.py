@@ -1,6 +1,7 @@
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 from WarehouseMapping import WarehouseMapping, Place, PICKER_VELOCITY
+from typing import List
 
 
 def create_data_model(mapping, map):
@@ -89,7 +90,7 @@ def printBestRoute(route, total_time):
     for pl in route:
         plan_output += ' {} ->'.format(pl)
     plan_output = plan_output[:-3]
-    plan_output += '\n Time = {}'.format(total_time)
+    plan_output += '\n Time = {:.1f}'.format(total_time)
     print(plan_output)
 
 def TSPsolver(places: list):  # list of places
@@ -100,8 +101,7 @@ def TSPsolver(places: list):  # list of places
     printBestRoute(sortedPlaces, total_time)
     return sortedPlaces, total_time
 
-def pairShelfsToBestRoute(best_route, places):
-    #best_route is list[int], places is list[Place]
+def pairShelfsToBestRoute(best_route: List[int], places : List[Place]):
     places.pop(0)
     places.pop(-1)
     def indexOfLocation(pl):
