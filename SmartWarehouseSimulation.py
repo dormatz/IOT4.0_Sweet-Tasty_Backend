@@ -1,8 +1,10 @@
+from numpy import empty
 from Agent import getBestState, getRemovedPlaces
 import WarehouseMapping
 from WarehouseMapping import LOCATIONS, SHELFS, WarehouseMapping
 from Env import Place, Env, Warehouse
 from copy import deepcopy
+import config
 
 
 class SmartWarehouse(Warehouse):
@@ -16,6 +18,14 @@ class SmartWarehouse(Warehouse):
         self.emptySpaces.sort(key=lambda obj: wm.fromEntrance(obj))
     
     def insertBoxes(self, boxesToInsert):
+        wm = WarehouseMapping()
+        while len(self.storage) < config.LIMIT_FOR_SMART_USE:
+            filledPlaces = self.emptySpaces[0:len(boxesToInsert)]
+            for i, place in enumerate(filledPlaces):
+                self.storage.append({"place":place, "box":boxesToInsert[i]})
+            for filledPlace in filledPlaces:
+                self.emptySpaces.remove(filledPlace)
+            return wm.distanceList(filledPlaces) 
         fullEmptySpaces = deepcopy(self.emptySpaces)
         self.emptySpaces = self.emptySpaces[0:2*len(boxesToInsert)]
         best_env, _, _ = getBestState(boxesToInsert, self)
@@ -25,7 +35,6 @@ class SmartWarehouse(Warehouse):
         for filledPlace in filledPlaces:
             self.emptySpaces.remove(filledPlace)
         self.storage.extend(filledBoxes)
-        wm = WarehouseMapping()
         return wm.distanceList(filledPlaces)
     
     def removeProducts(self, boxesToRemove):
