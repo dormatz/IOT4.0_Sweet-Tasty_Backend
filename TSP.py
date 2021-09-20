@@ -116,5 +116,4 @@ def pairShelfsToBestRoute(best_route: List[int], places : List[Place]):
 
 if __name__ =='__main__':
     res, time = TSPsolver([Place(788, 2)])
-    print(*res)
-    print(time)
+
