@@ -93,8 +93,12 @@ def printBestRoute(route, total_time):
     plan_output += '\n Time = {:.1f}'.format(total_time)
     print(plan_output)
 
-def TSPsolver(places: list):  # list of places
-    shelfs = [l.shelf for l in places]
+def TSPsolver(places: List[Place]):
+    if (places is None or len(places)==0):
+        return [], 0
+    if (len(places) == 1):
+        wm = WarehouseMapping()
+        return places, wm.distanceToTime(wm.fromEntrance(places[0]))
     best_route, total_distance = findMinimalRoute(places)
     sortedPlaces = pairShelfsToBestRoute(best_route, places)
     total_time = (total_distance/PICKER_VELOCITY) + len(best_route)  # a second for each stopping point
@@ -111,4 +115,6 @@ def pairShelfsToBestRoute(best_route: List[int], places : List[Place]):
 
 
 if __name__ =='__main__':
-    res, time = TSPsolver([Place(788, 2), Place(200, 4), Place(502, 1), Place(33, 1), Place(2, 1)])
+    res, time = TSPsolver([Place(788, 2)])
+    print(*res)
+    print(time)

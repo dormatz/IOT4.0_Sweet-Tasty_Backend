@@ -94,9 +94,9 @@ class Simulation:
         oDF = outputDF.drop_duplicates('Product_ID')
         oDF = oDF['Product_ID'].values
         oDF = [i for i in oDF if i in relevantIDs]
-        num_of_days = []
+        self.num_of_days = []
         for id in oDF:
-            num_of_days.append(len(outputDF.loc[outputDF['Product_ID'] == id].drop_duplicates('Date')))
+            self.num_of_days.append(len(outputDF.loc[outputDF['Product_ID'] == id].drop_duplicates('Date')))
         print("Done Initialization")
 
     def run(self):
@@ -183,5 +183,5 @@ class Simulation:
 if __name__ == '__main__':
     s = Simulation()
     s.setup()
-    s.run()
-    s.showResults()
+    s.num_of_days.sort()
+    print(s.num_of_days)

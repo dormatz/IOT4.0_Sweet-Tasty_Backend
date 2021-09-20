@@ -35,11 +35,11 @@ class SmartWarehouse(Warehouse):
         for filledPlace in filledPlaces:
             self.emptySpaces.remove(filledPlace)
         self.storage.extend(filledBoxes)
-        return wm.distanceList(filledPlaces)
+        return wm.totalTimeList(filledPlaces)
     
     def removeProducts(self, boxesToRemove):
         places, emptySpaces, updatedStorage = getRemovedPlaces(boxesToRemove, self)
         self.emptySpaces.extend(emptySpaces)
         self.storage = updatedStorage
         wm = WarehouseMapping()
-        return wm.distanceList(places)
+        return wm.totalTimeList(places)

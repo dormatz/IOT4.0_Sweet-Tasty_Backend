@@ -138,7 +138,7 @@ class WarehouseMapping(object):
     def distanceToTime(self, d):
         return float(d)/float(PICKER_VELOCITY)
 
-    def distanceList(self, places: List[Place]):
+    def totalTimeList(self, places: List[Place]):
         total_distance = 0
         for i in range(len(places)):
             if i == 0:
