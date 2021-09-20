@@ -43,9 +43,10 @@ class State(object):
         return len(self.boxesToInsert) == 0
 
     def insertBox(self, place):
+        wm = WarehouseMapping()
         box = self.boxesToInsert[0]
         self.warehouse.insertBox(place, box)
-        self.insertedBoxes.append({"place":place, "box":box})
+        self.insertedBoxes.append({"place":place, "box":box, 'distanceFromEntrance':wm.fromEntrance(place)})
         self.boxesToInsert.pop(0)
 
 

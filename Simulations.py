@@ -183,4 +183,6 @@ class Simulation:
 if __name__ == '__main__':
     s = Simulation()
     s.setup()
-    s.num_of_days.sort()
+    s.run()
+    s.showResults()
+

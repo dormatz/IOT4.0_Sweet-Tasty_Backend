@@ -22,10 +22,11 @@ class SmartWarehouse(Warehouse):
         while len(self.storage) < config.LIMIT_FOR_SMART_USE:
             filledPlaces = self.emptySpaces[0:len(boxesToInsert)]
             for i, place in enumerate(filledPlaces):
-                self.storage.append({"place":place, "box":boxesToInsert[i]})
+                self.storage.append({"place":place, "box":boxesToInsert[i], 'distanceFromEntrance':wm.fromEntrance(place)})
             for filledPlace in filledPlaces:
                 self.emptySpaces.remove(filledPlace)
-            return wm.distanceList(filledPlaces) 
+            return wm.totalTimeList(filledPlaces)
+        self.storage.sort(key=lambda obj: obj['distanceFromEntrance'])
         fullEmptySpaces = deepcopy(self.emptySpaces)
         self.emptySpaces = self.emptySpaces[0:2*len(boxesToInsert)]
         best_env, _, _ = getBestState(boxesToInsert, self)

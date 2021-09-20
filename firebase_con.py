@@ -33,7 +33,7 @@ def getStorageCollectionFirebase(ids=None):
     if ids == None:
         docs = db.collection('storage').get()
     else:
-        docs = db.collection('storage').where(u'id', u'in', ids).get()
+        docs = db.collection('storage').where(u'id', u'in', ids).order_by('distanceFromEntrance').get()
     return docs
 
 def updateStorageCollectionFirebase(place, box, delete=False):

@@ -123,7 +123,7 @@ def getRemovedPlaces(itemsToRemove: List[Box], warehouse=None):
     for item in itemsToRemove:
         boxes = [[Place(box['place'].location, box['place'].shelf)] for box in warehouse.storage if box['box'].id == item.id and box['box'].quantity >= item.quantity]
         if len(boxes) > 3:
-            boxes = random.choices(boxes, k=3)
+            boxes = boxes[:3]
         if len(boxes):
             boxesForEachId.append({'itemId':item.id, 'boxes':boxes})
         else:
