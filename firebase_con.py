@@ -37,12 +37,14 @@ def getStorageCollectionFirebase(ids=None):
     return docs
 
 def updateStorageCollectionFirebase(place, box, delete=False):
+    wm = WarehouseMapping()
     db = connect()
     if delete:
         db.collection('storage').document(f'{place.location}, {place.shelf}').delete()
         return
     data = place.__dict__
     data.update(box.__dict__)
+    data.update({'distanceFromEntrance':wm.fromEntrance(place)})
     db.collection('storage').document(f'{place.location}, {place.shelf}').set(data)
 
 
@@ -54,4 +56,4 @@ def updateEmptySpaces(place, delete=False):
         return
     data = place.__dict__
     data.update({'distanceFromEntrance':wm.fromEntrance(place)})
-    docs = db.collection('emptySpaces').document(f'{place.location}, {place.shelf}').set(data)
+    db.collection('emptySpaces').document(f'{place.location}, {place.shelf}').set(data)

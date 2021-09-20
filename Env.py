@@ -64,7 +64,7 @@ class Warehouse(object):
             docs = getStorageCollectionFirebase()
         for doc in docs:
             item = doc.to_dict()
-            self.storage.append({'place':Place(item['location'],item['shelf']), 'box':Box(item['id'], item['quantity'])})
+            self.storage.append({'place':Place(item['location'],item['shelf']), 'box':Box(item['id'], item['quantity']), 'distanceFromEntrance':item['distanceFromEntrance']})
         self.emptySpaces = []
         docs = getEmptySpaceCollectionFirebase(size) if size != 0 else []
         for doc in docs:
@@ -74,7 +74,8 @@ class Warehouse(object):
         self.updatedStorage = []
 
     def insertBox(self, place, box):
-        self.storage.append({'place':place, 'box':box})
+        wm = WarehouseMapping()
+        self.storage.append({'place':place, 'box':box, 'distanceFromEntrance':wm.fromEntrance(place)})
         for emptySpace in self.emptySpaces:
             if emptySpace == place:
                 self.emptySpaces.remove(emptySpace)
