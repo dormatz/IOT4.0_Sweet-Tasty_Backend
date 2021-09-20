@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_restful import reqparse
-from Env import Box, saveEmptySpaces, saveStorage
+from Env import Box, saveEmptySpaces, saveStorage, Warehouse
 from Agent import getBestState, getRemovedPlaces
 from firebase_con import setEmptySpaces
 from WarehouseMapping import WarehouseMapping
@@ -72,6 +72,13 @@ def remove():
 def reset():
     setEmptySpaces()
     return 'reset'
+
+@app.route('/clear_all_storage')
+def removeAllStorage():
+    warehouse = Warehouse(0)
+    addToEmptySpaces = [item['place'] for item in warehouse.storage]
+    saveEmptySpaces(addToEmptySpaces, remove=False)
+    return 'clear_all_storage'
 
 if __name__ == '__main__':
     app.run(debug=True)

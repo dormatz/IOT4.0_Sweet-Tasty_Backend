@@ -10,8 +10,7 @@ import json
 import pickle
 from copy import deepcopy
 import math
-
-max_itr = 10
+import config
 
 def rewardCalc(storage, inserted_box):
     # get days that the Box was removed and boxes that were remove with it.
@@ -113,7 +112,7 @@ def getBestState(BoxesToInsert: List[Box], warehouse=None):
             best_env = curr_env
         else:
             not_changed +=1
-        if not_changed == max_itr:
+        if not_changed == config.MAX_ITR:
             return best_env, best_state, best_reward
 
 
