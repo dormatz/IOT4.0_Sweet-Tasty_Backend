@@ -3,6 +3,7 @@ from firebase_admin import credentials, firestore
 from WarehouseMapping import Place, SHELFS, LOCATIONS_PER_AISLE, AISLES, WarehouseMapping
 from Env import Place
 import os
+from datetime import datetime
 
 def connect():
     if not firebase_admin._apps:
@@ -36,7 +37,7 @@ def getStorageCollectionFirebase(ids=None):
         docs = db.collection('storage').where(u'id', u'in', ids).order_by('distanceFromEntrance').get()
     return docs
 
-def updateStorageCollectionFirebase(place, box, delete=False):
+def updateStorageCollectionFirebase(place, box, str_date='', delete=False):
     wm = WarehouseMapping()
     db = connect()
     if delete:
@@ -44,8 +45,13 @@ def updateStorageCollectionFirebase(place, box, delete=False):
         return
     data = place.__dict__
     data.update(box.__dict__)
-    data.update({'distanceFromEntrance':wm.fromEntrance(place)})
-    db.collection('storage').document(f'{place.location}, {place.shelf}').set(data)
+    if len(str_date):
+        data.update({'distanceFromEntrance':wm.fromEntrance(place)})
+        date = str_date.split('-')
+        data.update({'expiration_date':datetime(int(date[0]), int(date[1]), int(date[2]))})
+        db.collection('storage').document(f'{place.location}, {place.shelf}').set(data)
+        return
+    db.collection('storage').document(f'{place.location}, {place.shelf}').update(data)
 
 
 def updateEmptySpaces(place, delete=False):

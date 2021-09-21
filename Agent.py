@@ -99,12 +99,12 @@ class Agent(object):
 
 
 def getBestState(BoxesToInsert: List[Box], warehouse=None):
-    best_reward = -math.inf
+    best_reward = -1 *math.inf
     not_changed = 0
     while True:
         agent = Agent(BoxesToInsert, deepcopy(warehouse))
         curr_env, curr_state, curr_reward = agent.findFiniteHorizon()
-        if curr_reward > best_reward*(1 + config.EPSILON):
+        if curr_reward > best_reward*(1 - config.EPSILON):
             best_reward = curr_reward
             best_state = curr_state
             best_env = curr_env

@@ -13,10 +13,10 @@ app = Flask(__name__)
 
 @app.route('/insert', methods=['POST', 'GET'])
 def insert():
-    #SetEmptySpaces() #ONLY WHEN WE WANT TO RESTART THE WAREHOUSE
     parser = reqparse.RequestParser()
     parser.add_argument('ids', type=int, action="append")
     parser.add_argument('quantity', type=int, action="append")
+    parser.add_argument('date', type=str, action="append")
     args = parser.parse_args()
     ids = args['ids']
     quantities = args['quantity']
@@ -27,7 +27,7 @@ def insert():
     best_env, _, _ = getBestState(boxesToInsert)
     filledPlaces = best_env.getFilledPlaces()
     filledBoxes = best_env.getFilledBoxes()
-    saveStorage(filledBoxes)
+    saveStorage(filledBoxes, args['date'])
     saveEmptySpaces(filledPlaces)
     tspPlaces, _ = TSPsolver(deepcopy(filledPlaces))
     pri = '{'
