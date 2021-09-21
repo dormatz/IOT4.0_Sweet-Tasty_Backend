@@ -107,7 +107,7 @@ class Simulation:
             self.smart_insert_times.append(self.smartWarehouse.insertBoxes(listOfBoxes))
             self.greedy_insert_times.append(self.greedyWarehouse.insertBoxes(listOfBoxes))
             self.random_insert_times.append(self.randomWarehouse.insertBoxes(listOfBoxes))
-            print('-', end="")
+            print(str(i) + '-----------------------', end="")
 
         print("Insertion finished")
         self.greedyWarehouse.organizeStorageList()

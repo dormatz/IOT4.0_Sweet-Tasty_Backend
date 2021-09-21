@@ -54,7 +54,7 @@ def rewardBatchCalc(batch: List[Box], storage, insertedPlace: Place):
         boxes = [[Place(box['place'].location, box['place'].shelf)] for box in storage if box['box'].id == item.id and box['box'].quantity >= item.quantity \
                             and not box['place']==insertedPlace]
         if len(boxes) > 3:
-            boxes = random.choices(boxes, k=3)
+            boxes = boxes[:3]
         if len(boxes):
             boxesForEachId.append({'itemId':item.id, 'boxes':boxes})
         else:
@@ -88,30 +88,29 @@ class Agent(object):
         action_index = torch.multinomial(actions_probs, 1).item()
         action = self.env.actions[action_index]
         self.env.step(action)
-        inserted_box = self.env.state.insertedBoxes[-1]
-        #dict of 'place' and 'box'
+        inserted_box = self.env.state.insertedBoxes[-1]  # dict of 'place', 'box' and 'distance'
         storage = deepcopy(self.env.state.warehouse.storage)
         self.total_reward += rewardCalc(storage, inserted_box)
 
-    def fullSteps(self):
+    def findFiniteHorizon(self):
         while not self.env.state.isDone():
             self.step()
         return self.env, self.env.state, self.total_reward
 
 
 def getBestState(BoxesToInsert: List[Box], warehouse=None):
-    agent = Agent(BoxesToInsert, deepcopy(warehouse))
-    best_env, best_state, best_reward = agent.fullSteps()
+    best_reward = -math.inf
     not_changed = 0
     while True:
         agent = Agent(BoxesToInsert, deepcopy(warehouse))
-        curr_env, curr_state, curr_reward = agent.fullSteps()
-        if curr_reward > best_reward:
+        curr_env, curr_state, curr_reward = agent.findFiniteHorizon()
+        if curr_reward > best_reward*(1 + config.EPSILON):
             best_reward = curr_reward
             best_state = curr_state
             best_env = curr_env
+            not_changed = 0
         else:
-            not_changed +=1
+            not_changed += 1
         if not_changed == config.MAX_ITR:
             return best_env, best_state, best_reward
 

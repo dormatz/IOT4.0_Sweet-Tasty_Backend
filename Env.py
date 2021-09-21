@@ -77,10 +77,8 @@ class Warehouse(object):
     def insertBox(self, place, box):
         wm = WarehouseMapping()
         self.storage.append({'place':place, 'box':box, 'distanceFromEntrance':wm.fromEntrance(place)})
-        for emptySpace in self.emptySpaces:
-            if emptySpace == place:
-                self.emptySpaces.remove(emptySpace)
-                return
+        self.emptySpaces.remove(place)
+        return
     
     def isEmpty(self, place):
         return place in (item[0] for item in self.storage)
@@ -99,8 +97,7 @@ class Warehouse(object):
 class Env(object):
     def __init__(self, BoxesToInsert: List[Box], warehouse=None):
         self.state = State(BoxesToInsert, warehouse)
-        actions = sorted([(emptyPlace, WarehouseMapping().fromEntrance(emptyPlace)) for emptyPlace in self.state.warehouse.emptySpaces], key=lambda obj: obj[1])
-        self.actions = [action[0] for action in actions[:len(BoxesToInsert)*10]]
+        self.actions = deepcopy(self.state.warehouse.emptySpaces)
     
     def step(self, action):
         self.state.insertBox(action)
@@ -112,14 +109,14 @@ class Env(object):
     def getFilledBoxes(self):
         return self.state.insertedBoxes
 
-def saveEmptySpaces(FiledPlaces: List[Place], remove=True):
-    for place in FiledPlaces:
+def saveEmptySpaces(FilledPlaces: List[Place], remove=True):
+    for place in FilledPlaces:
         if remove:
             updateEmptySpaces(place, delete=True)
         else:
             updateStorageCollectionFirebase(place, None, delete=True)
             updateEmptySpaces(place)
 
-def saveStorage(FiledBoxes: List[Box]):
-    for box in FiledBoxes:
+def saveStorage(FilledBoxes: List[Box]):
+    for box in FilledBoxes:
         updateStorageCollectionFirebase(box['place'], box['box'])

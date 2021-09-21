@@ -15,28 +15,28 @@ class SmartWarehouse(Warehouse):
             for j in range(SHELFS):
                 self.emptySpaces.append(Place(i, j))
         wm = WarehouseMapping()
-        self.emptySpaces.sort(key=lambda obj: wm.fromEntrance(obj))
+        self.emptySpaces.sort(key=lambda place: wm.fromEntrance(place))
     
     def insertBoxes(self, boxesToInsert):
         wm = WarehouseMapping()
-        while len(self.storage) < config.LIMIT_FOR_SMART_USE:
-            filledPlaces = self.emptySpaces[0:len(boxesToInsert)]
-            for i, place in enumerate(filledPlaces):
+        if len(self.storage) < config.LIMIT_FOR_SMART_USE:
+            placesToFill = self.emptySpaces[0:len(boxesToInsert)]
+            for i, place in enumerate(placesToFill):
                 self.storage.append({"place":place, "box":boxesToInsert[i], 'distanceFromEntrance':wm.fromEntrance(place)})
-            for filledPlace in filledPlaces:
-                self.emptySpaces.remove(filledPlace)
-            return wm.totalTimeList(filledPlaces)
+            self.emptySpaces[0:len(boxesToInsert)] = []
+            return wm.totalTimeList(placesToFill)
+
         self.storage.sort(key=lambda obj: obj['distanceFromEntrance'])
         fullEmptySpaces = deepcopy(self.emptySpaces)
-        self.emptySpaces = self.emptySpaces[0:2*len(boxesToInsert)]
+        self.emptySpaces = self.emptySpaces[0:config.EMPTY_SPACE_LEN_FACTOR*len(boxesToInsert)]
         best_env, _, _ = getBestState(boxesToInsert, self)
         self.emptySpaces = fullEmptySpaces
-        filledPlaces = best_env.getFilledPlaces()
+        placesToFill = best_env.getFilledPlaces()
         filledBoxes = best_env.getFilledBoxes()
-        for filledPlace in filledPlaces:
+        for filledPlace in placesToFill:
             self.emptySpaces.remove(filledPlace)
         self.storage.extend(filledBoxes)
-        return wm.totalTimeList(filledPlaces)
+        return wm.totalTimeList(placesToFill)
     
     def removeProducts(self, boxesToRemove):
         places, emptySpaces, updatedStorage = getRemovedPlaces(boxesToRemove, self)
