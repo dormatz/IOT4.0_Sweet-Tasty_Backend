@@ -117,6 +117,9 @@ def saveEmptySpaces(FilledPlaces: List[Place], remove=True):
             updateStorageCollectionFirebase(place, None, delete=True)
             updateEmptySpaces(place)
 
-def saveStorage(FilledBoxes: List[Box]):
-    for box in FilledBoxes:
-        updateStorageCollectionFirebase(box['place'], box['box'])
+def saveStorage(FilledBoxes: List[Box], dates: List[str] = []):
+    for i, box in enumerate(FilledBoxes):
+        if len(dates):
+            updateStorageCollectionFirebase(box['place'], box['box'], dates[i])
+        else:
+            updateStorageCollectionFirebase(box['place'], box['box'])

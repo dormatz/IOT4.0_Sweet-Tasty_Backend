@@ -10,9 +10,7 @@ import json
 import pickle
 from copy import deepcopy
 import math
-from time import time
 import config
-from scipy.special import comb
 
 def rewardCalc(storage, inserted_box):
     # get days that the Box was removed and boxes that were remove with it.
@@ -50,7 +48,6 @@ def rewardCalc(storage, inserted_box):
     return -1*mean_time
 
 def rewardBatchCalc(batch: List[Box], storage, insertedPlace: Place):
-
     boxesForEachId = []
     itemNotFound = []
     for item in batch:
