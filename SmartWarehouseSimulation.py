@@ -39,8 +39,7 @@ class SmartWarehouse(Warehouse):
         return wm.totalTimeList(placesToFill)
     
     def removeProducts(self, boxesToRemove):
-        places, emptySpaces, updatedStorage = getRemovedPlaces(boxesToRemove, self)
+        places, emptySpaces, updatedStorage = getRemovedPlaces(boxesToRemove, self)  # could return None, need to handle that case
         self.emptySpaces.extend(emptySpaces)
         self.storage = updatedStorage
-        wm = WarehouseMapping()
-        return wm.totalTimeList(places)
+        return WarehouseMapping().totalTimeList(places)

@@ -2,6 +2,10 @@ from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 from WarehouseMapping import WarehouseMapping, Place, PICKER_VELOCITY
 from typing import List
+from time import time
+import numpy as np
+import itertools
+import math
 
 
 def create_data_model(mapping, map):
@@ -91,9 +95,14 @@ def printBestRoute(route, total_time):
         plan_output += ' {} ->'.format(pl)
     plan_output = plan_output[:-3]
     plan_output += '\n Time = {:.1f}'.format(total_time)
-    print(plan_output)
+    #print(plan_output)
+
+
+""""Entry point to the module"""
 
 def TSPsolver(places: List[Place]):
+    if(len(places) < 10):
+        return bruteTSP(places)
     if (places is None or len(places)==0):
         return [], 0
     if (len(places) == 1):
@@ -113,7 +122,31 @@ def pairShelfsToBestRoute(best_route: List[int], places : List[Place]):
     places.sort(key=indexOfLocation)
     return places
 
+""""Calculates best path using the brute-force algo"""
+
+def bruteTSP(places : List[Place]):
+    map = np.load("MappingMatrix.dat", allow_pickle=True)
+    permutations = itertools.permutations(places)
+    wm = WarehouseMapping()
+    fastest_time = math.inf
+    best_prem = []
+    for perm in permutations:
+        cur_time = wm.totalTimeList(list(perm))
+        if cur_time < fastest_time:
+            best_prem = perm
+            fastest_time = cur_time
+    return best_prem, fastest_time
 
 if __name__ =='__main__':
-    res, time = TSPsolver([Place(788, 2)])
+    pl = []
+    for i in range(0,200):
+        for j in range(0,2):
+            pl.append(Place(i,j))
+    places = [Place(788, 2), Place(400,2), Place(252,4), Place(4,1),Place(100,1),Place(78,1),Place(555,1),]
+    st = time()
+    res, calculated_time = TSPsolver(pl)
+    print(time()-st)
+    st2 = time()
+    _, t = bruteTSP(places)
+    print(time()-st2)
 

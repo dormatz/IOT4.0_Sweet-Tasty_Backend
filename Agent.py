@@ -10,7 +10,9 @@ import json
 import pickle
 from copy import deepcopy
 import math
+from time import time
 import config
+from scipy.special import comb
 
 def rewardCalc(storage, inserted_box):
     # get days that the Box was removed and boxes that were remove with it.
@@ -23,38 +25,40 @@ def rewardCalc(storage, inserted_box):
     insertedPlace = inserted_box['place']
     outputDF = pd.read_pickle("./outputDF.pkl")
     batches = []  # list of lists of Boxes
-    k = 2
+    k = 1  # batches of size 3
     removeDB = deepcopy(outputDF.values)
     n = len(removeDB)
     found = 0
     limit_found = 5
-    for i, row in enumerate(outputDF.values):
-        if row[2] == id:
+    for i, row in enumerate(outputDF.values[1:]):
+        if row[2] == id :
             found += 1
             new_batch = []
-            for row in removeDB[max(i-k, 0):min(i+k, n)]:
+            for row in removeDB[max(i-k, 0):min(i+k+1, n)]:
                 if row[2] == id:
                     continue
                 new_batch.append(Box(row[2], -1*row[1]))
             batches.append(new_batch)
             if (found >= limit_found):
                 break
-    best_time = math.inf
+    total_time = 0
+    #print(f"num of batches found: {len(batches)}")
     for batch in batches:
-        cur_time = rewardBatchCalc(batch, storage, insertedPlace)
-        if best_time > cur_time:
-            best_time = cur_time
-
-    return -1*best_time
+        #print(len(batch), end="")
+        total_time += rewardBatchCalc(batch, storage, insertedPlace)
+    mean_time = total_time/len(batches)
+    return -1*mean_time
 
 def rewardBatchCalc(batch: List[Box], storage, insertedPlace: Place):
+
     boxesForEachId = []
     itemNotFound = []
     for item in batch:
         boxes = [[Place(box['place'].location, box['place'].shelf)] for box in storage if box['box'].id == item.id and box['box'].quantity >= item.quantity \
-                            and not box['place']==insertedPlace]
-        if len(boxes) > 3:
-            boxes = boxes[:3]
+                            and not box['place'] == insertedPlace]
+
+        boxes = boxes[:3]
+
         if len(boxes):
             boxesForEachId.append({'itemId':item.id, 'boxes':boxes})
         else:
@@ -79,9 +83,10 @@ def rewardBatchCalc(batch: List[Box], storage, insertedPlace: Place):
     return TSPsolver(chosenOption)[1]
 
 class Agent(object):
-    def __init__(self, BoxesToInsert: List[Box], warehouse: Warehouse):
+    def __init__(self, BoxesToInsert: List[Box], warehouse: Warehouse, best_total_reward_found_so_far=-math.inf):
         self.env = Env(deepcopy(BoxesToInsert), warehouse)
         self.total_reward = 0
+        self.best_total_reward_found_so_far = best_total_reward_found_so_far
 
     def step(self):
         actions_probs = torch.nn.functional.softmax(torch.rand(len(self.env.actions)), dim=0)
@@ -93,36 +98,41 @@ class Agent(object):
         self.total_reward += rewardCalc(storage, inserted_box)
 
     def findFiniteHorizon(self):
-        while not self.env.state.isDone():
+        while (not self.env.state.isDone() and not self.total_reward < self.best_total_reward_found_so_far):
             self.step()
         return self.env, self.env.state, self.total_reward
 
 
 def getBestState(BoxesToInsert: List[Box], warehouse=None):
+    n = len(BoxesToInsert)
+    max_itr = min(config.MAX_ITR, choose(config.EMPTY_SPACE_LEN_FACTOR * n, n)+2)
+    #print(f"max itr is {max_itr}")
     best_reward = -math.inf
-    not_changed = 0
+    num_of_horizons_not_improved = 0
     while True:
-        agent = Agent(BoxesToInsert, deepcopy(warehouse))
+        agent = Agent(BoxesToInsert, deepcopy(warehouse), best_reward)
         curr_env, curr_state, curr_reward = agent.findFiniteHorizon()
-        if curr_reward > best_reward*(1 + config.EPSILON):
+        #print(curr_reward)
+        #print('****' + str(num_of_horizons_not_improved))
+        if curr_reward > best_reward * (1 - config.EPSILON):
             best_reward = curr_reward
             best_state = curr_state
             best_env = curr_env
-            not_changed = 0
+            num_of_horizons_not_improved = 0
         else:
-            not_changed += 1
-        if not_changed == config.MAX_ITR:
+            num_of_horizons_not_improved += 1
+        if num_of_horizons_not_improved == max_itr:
             return best_env, best_state, best_reward
 
 
 def getRemovedPlaces(itemsToRemove: List[Box], warehouse=None):
+    """Basically choosing which items to remove if there are a lot options with those IDs"""
     warehouse = Warehouse(0) if warehouse is None else warehouse
     boxesForEachId = []
     itemNotFound = []
     for item in itemsToRemove:
         boxes = [[Place(box['place'].location, box['place'].shelf)] for box in warehouse.storage if box['box'].id == item.id and box['box'].quantity >= item.quantity]
-        if len(boxes) > 3:
-            boxes = boxes[:3]
+        boxes = boxes[:3]
         if len(boxes):
             boxesForEachId.append({'itemId':item.id, 'boxes':boxes})
         else:
@@ -145,3 +155,15 @@ def getRemovedPlaces(itemsToRemove: List[Box], warehouse=None):
     for i in range(len(chosenOption)):
         warehouse.removeProducts(chosenOption[i], itemsToRemove[i].quantity)
     return chosenOption, warehouse.addToEmptySpaces, warehouse.updatedStorage
+
+def choose(n, k):
+    if 0 <= k <= n:
+        ntok = 1
+        ktok = 1
+        for t in range(1, min(k, n - k) + 1):
+            ntok *= n
+            ktok *= t
+            n -= 1
+        return ntok // ktok
+    else:
+        return 0

@@ -43,6 +43,7 @@ class Simulation:
                          if id in relevantIDs]
 
         self._boxesToInsert.reverse()
+        """
         # fill random boxes to insert based on random sampling from existing ones so that the number of boxes will fill the warehouse
         k_to_fill = NUM_OF_PLACES-len(relevantIDs)-5
         idChoices = random.choices(relevantIDs, k=NUM_OF_PLACES-len(relevantIDs)-5)
@@ -50,8 +51,9 @@ class Simulation:
             m = random.randint(10, 500)
             j = random.randint(0, len(self._boxesToInsert))
             self._boxesToInsert.insert(j, Box(idChoices[i], m))
-
+        
         # create the real boxesToInsert which is list of lists. every inner list is a batch for one insertion.
+        """
         i = 0
         n = len(self._boxesToInsert)
         self.boxesToInsert = []  # will be list of lists
@@ -112,7 +114,7 @@ class Simulation:
         print("Insertion finished")
         self.greedyWarehouse.organizeStorageList()
         self.randomWarehouse.organizeStorageList()
-
+        print(len(self.boxesToRemove))
         print("Starting removal")
         for i, listOfBoxes in enumerate(self.boxesToRemove):
             self.smart_remove_times.append(self.smartWarehouse.removeProducts(listOfBoxes))

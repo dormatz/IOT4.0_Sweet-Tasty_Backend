@@ -1,6 +1,7 @@
 import numpy as np
 import itertools
 from typing import List, Set, Dict, Tuple, Optional
+import pickle
 
 AISLES = 8
 SHELFS = 5
@@ -51,7 +52,6 @@ class WarehouseMapping(object):
             self.populate2D()  # for or-tools tsp solver
 
 
-
     def populate1D(self):
         it = np.nditer(self._Shelfs1DMap, op_flags=['readwrite'], flags=['f_index'])
         for x in it:
@@ -65,7 +65,7 @@ class WarehouseMapping(object):
         self._Loc2DMap = np.zeros((LOCATIONS,LOCATIONS))
         _range = list(range(LOCATIONS))
         for (i,j) in itertools.product(_range,_range):
-            self._Loc2DMap[i][j] = self.distance(Place(i, 4), Place(j, 4), walk_dist=True)
+            self._Loc2DMap[i][j] = self.distance(Place(i, 4), Place(j, 4), walk_dist=False)
 
     """"including shelfs height!"""
     def getLoc2DMapForTSP(self, places: list):
@@ -147,11 +147,11 @@ class WarehouseMapping(object):
                 if i != len(places)-1:
                     total_distance += self.distance(places[i], places[i+1], walk_dist=True)
         return self.distanceToTime(total_distance)
-"""
+
 if __name__ == '__main__':
     mapping = WarehouseMapping(calculate_loc2Dmatrix=True)
-    print(mapping.fromEntrance(Place(202, 2)))
-    print(mapping.distance(Place(206, 3), Place(204, 4)))
     mat = mapping.getLoc2DMap()
-    print(mat)
-"""
+    #mat.dump("MappingMatrix.dat")
+    mat2 = np.load("MappingMatrix.dat", allow_pickle=True)
+    print(mat2 == mat)
+

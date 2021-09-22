@@ -19,6 +19,8 @@ class SimulatedWarehouse(ABC):
                 self.emptySpaces.append(Place(i, j))
 
     def insertBoxes(self, boxes) -> float:
+        if(len(self.emptySpaces) < len(boxes)):
+            return 0
         prev_place = None
         total_distance = 0
         for box in boxes:
@@ -72,7 +74,7 @@ class GreedyWarehouse(SimulatedWarehouse):
         self.emptySpaces.sort(key=self.wMap.fromEntrance)
 
     def organizeStorageList(self):
-        self.storage.sort(key=self.wMap.fromEntrance)
+        self.storage.sort(key=lambda a: self.wMap.fromEntrance(a['place']))
 
 class RandomWarehouse(SimulatedWarehouse):
     def __init__(self):
