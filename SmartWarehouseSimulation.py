@@ -46,5 +46,4 @@ class SmartWarehouse(Warehouse):
             return 0
         places, emptySpaces, updatedStorage = removedPlaces
         self.emptySpaces.extend(emptySpaces)
-        self.storage = updatedStorage
         return WarehouseMapping().totalTimeList(places)

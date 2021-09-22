@@ -42,11 +42,9 @@ class SimulatedWarehouse(ABC):
         prev_place = None
         total_found = 0
         for box in boxesToRemove:
-            found = False
             for item in self.storage:
                 if item['box'].id == box.id and item['box'].quantity >= box.quantity:
                     item['box'].quantity -= box.quantity
-                    found = True
                     total_found += 1
                     cur_place = item['place']
                     if prev_place:
@@ -58,12 +56,14 @@ class SimulatedWarehouse(ABC):
                         self.storage.remove(item)
                         self.emptySpaces.append(item['place'])
                     break
-            if not found:
-                print('Not found')
-
-
-        print(f'found {total_found} out of {len(boxesToRemove)}')
+        """
+        if total_found:
+            print(f'found {total_found} out of {len(boxesToRemove)}')
+        else:
+            print('Not found')
+        """
         return self.wMap.distanceToTime(total_distance)
+
 
     def organizeStorageList(self):
         pass

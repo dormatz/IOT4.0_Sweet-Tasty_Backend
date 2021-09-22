@@ -9,6 +9,7 @@ from SmartWarehouseSimulation import SmartWarehouse
 import matplotlib.pyplot as plt
 from tabulate import tabulate
 from pathlib import Path
+from copy import deepcopy
 
 """ Module to run simulations to prove that we do achieve improvements
  This module doesnt runs as a part of the actual "product" so it can be inefficient"""
@@ -83,7 +84,7 @@ class Simulation:
         n = len(self._boxesToRemove)
         self.boxesToRemove = []  # will be list of lists
         while (i < n):
-            size = random.randint(3, 7)
+            size = random.randint(3, 6)
             if (i + size > n):
                 size = n - i  # so we wont get out of bounds
             self.boxesToRemove.append(self._boxesToRemove[i:i + size])
@@ -105,40 +106,38 @@ class Simulation:
         print("Running")
         print(len(self.boxesToInsert))
         for i, listOfBoxes in enumerate(self.boxesToInsert):
-            print(listOfBoxes)
-            self.smart_insert_times.append(self.smartWarehouse.insertBoxes(listOfBoxes))
-            self.greedy_insert_times.append(self.greedyWarehouse.insertBoxes(listOfBoxes))
-            self.random_insert_times.append(self.randomWarehouse.insertBoxes(listOfBoxes))
-            print(str(i) + '-----------------------', end="")
+            self.smart_insert_times.append(self.smartWarehouse.insertBoxes(deepcopy(listOfBoxes)))
+            self.greedy_insert_times.append(self.greedyWarehouse.insertBoxes(deepcopy(listOfBoxes)))
+            self.random_insert_times.append(self.randomWarehouse.insertBoxes(deepcopy(listOfBoxes)))
 
         print("Insertion finished")
         self.greedyWarehouse.organizeStorageList()
         self.randomWarehouse.organizeStorageList()
         print(len(self.boxesToRemove))
         print("Starting removal")
-        for i, listOfBoxes in enumerate(self.boxesToRemove):
-            self.smart_remove_times.append(self.smartWarehouse.removeProductsList(listOfBoxes))
-            self.greedy_remove_times.append(self.greedyWarehouse.removeProducts(listOfBoxes))
-            self.random_remove_times.append(self.randomWarehouse.removeProducts(listOfBoxes))
-            if i % 10 == 0:
-                print('-', end="")
+        self.remove_limit = 800
+        for i, listOfBoxes in enumerate(self.boxesToRemove[:self.remove_limit]):
+            self.smart_remove_times.append(self.smartWarehouse.removeProductsList(deepcopy(listOfBoxes)))
+            self.greedy_remove_times.append(self.greedyWarehouse.removeProducts(deepcopy(listOfBoxes)))
+            self.random_remove_times.append(self.randomWarehouse.removeProducts(deepcopy(listOfBoxes)))
 
         print("Removal finished")
 
     def showResults(self):
         smart_better_than_greedy = 0
         smart_better_than_random = 0
-        n = len(self.boxesToRemove)
-        for i in range(n):
+        nInsert = len(self.boxesToInsert)
+        nRemove = self.remove_limit
+        for i in range(nRemove):
             if self.smart_remove_times[i] < self.greedy_remove_times[i]:
                 smart_better_than_greedy += 1
             if self.smart_remove_times[i] < self.random_remove_times[i]:
                 smart_better_than_random += 1
 
         print('SmartWarehouse is better than GreedyWarehouse in' +
-              str(float(smart_better_than_greedy*100)/float(n)) + 'of the cases')
+              str(float(smart_better_than_greedy*100)/float(nRemove)) + 'of the cases')
         print('SmartWarehouse is better than RandomWarehouse in' +
-              str(float(smart_better_than_random*100)/float(n)) + 'of the cases')
+              str(float(smart_better_than_random*100)/float(nRemove)) + 'of the cases')
 
         total_remove_time_smart = sum(self.smart_remove_times)
         total_insert_time_smart = sum(self.smart_insert_times)
@@ -171,14 +170,15 @@ class Simulation:
                      showindex=['Smart', 'Greedy', 'Random'])
         )
 
-        plt.scatter(range(n), self.smart_insert_times)
-        plt.scatter(range(n), self.greedy_insert_times)
-        plt.scatter(range(n), self.random_insert_times)
+        plt.scatter(range(nInsert), self.smart_insert_times)
+        plt.scatter(range(nInsert), self.greedy_insert_times)
+        plt.scatter(range(nInsert), self.random_insert_times)
+        plt.legend()
         plt.title('Insertion times')
         plt.show()
-        plt.scatter(range(n), self.smart_remove_times)
-        plt.scatter(range(n), self.random_remove_times)
-        plt.scatter(range(n), self.greedy_remove_times)
+        plt.scatter(range(nRemove), self.smart_remove_times)
+        plt.scatter(range(nRemove), self.random_remove_times)
+        plt.scatter(range(nRemove), self.greedy_remove_times)
         plt.title('Removal times')
         plt.show()
 
