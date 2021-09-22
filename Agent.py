@@ -134,7 +134,7 @@ def getRemovedPlaces(itemsToRemove: List[Box], warehouse=None):
             boxesForEachId.append({'itemId':item.id, 'boxes':boxes})
         else:
             itemNotFound.append(item)
-    print(f"found {len(itemsToRemove)-len(itemNotFound)} out of {len(itemsToRemove)}")
+    #print(f"found {len(itemsToRemove)-len(itemNotFound)} out of {len(itemsToRemove)}")
     for item in itemNotFound:
         itemsToRemove.remove(item)
     if len(boxesForEachId) == 0:
