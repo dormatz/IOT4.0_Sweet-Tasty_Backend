@@ -16,6 +16,8 @@ class SmartWarehouse(Warehouse):
                 self.emptySpaces.append(Place(i, j))
         wm = WarehouseMapping()
         self.emptySpaces.sort(key=lambda place: wm.fromEntrance(place))
+        self.updatedStorage = []
+        self.addToEmptySpaces = []
     
     def insertBoxes(self, boxesToInsert):
         wm = WarehouseMapping()
@@ -38,8 +40,11 @@ class SmartWarehouse(Warehouse):
         self.storage.extend(filledBoxes)
         return wm.totalTimeList(placesToFill)
     
-    def removeProducts(self, boxesToRemove):
-        places, emptySpaces, updatedStorage = getRemovedPlaces(boxesToRemove, self)  # could return None, need to handle that case
+    def removeProductsList(self, boxesToRemove):
+        removedPlaces = getRemovedPlaces(boxesToRemove, self)
+        if removedPlaces is None:
+            return 0
+        places, emptySpaces, updatedStorage = removedPlaces
         self.emptySpaces.extend(emptySpaces)
         self.storage = updatedStorage
         return WarehouseMapping().totalTimeList(places)

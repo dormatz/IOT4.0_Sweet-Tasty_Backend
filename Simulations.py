@@ -117,7 +117,7 @@ class Simulation:
         print(len(self.boxesToRemove))
         print("Starting removal")
         for i, listOfBoxes in enumerate(self.boxesToRemove):
-            self.smart_remove_times.append(self.smartWarehouse.removeProducts(listOfBoxes))
+            self.smart_remove_times.append(self.smartWarehouse.removeProductsList(listOfBoxes))
             self.greedy_remove_times.append(self.greedyWarehouse.removeProducts(listOfBoxes))
             self.random_remove_times.append(self.randomWarehouse.removeProducts(listOfBoxes))
             if i % 10 == 0:
