@@ -58,8 +58,10 @@ def rewardBatchCalc(batch: List[Box], storage, insertedPlace: Place):
 
         if len(boxes):
             boxesForEachId.append({'itemId':item.id, 'boxes':boxes})
+            #print(len(boxes))
         else:
             itemNotFound.append(item)
+            #print('item not found')
     for item in itemNotFound:
         batch.remove(item)
     if len(boxesForEachId) == 0:

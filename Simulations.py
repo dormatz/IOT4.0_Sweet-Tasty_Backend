@@ -10,12 +10,18 @@ import matplotlib.pyplot as plt
 from tabulate import tabulate
 from pathlib import Path
 from copy import deepcopy
+import pickle
+import config
 
 """ Module to run simulations to prove that we do achieve improvements
  This module doesnt runs as a part of the actual "product" so it can be inefficient"""
 class Simulation:
-    def __init__(self):
+    def __init__(self, load_storage=False):
         self.smartWarehouse = SmartWarehouse()
+        self.load_storage = load_storage
+        if self.load_storage:
+            with open(f"storage_{config.LIMIT_FOR_SMART_USE}greedy_{config.MAX_ITR}maxitr_{config.EMPTY_SPACE_LEN_FACTOR}emptyspacesfactor.pkl", 'rb') as f:
+                self.smartWarehouse.storage = pickle.load(f)
         self.greedyWarehouse = GreedyWarehouse()
         self.randomWarehouse = RandomWarehouse()
         self.smart_insert_times = []
@@ -104,40 +110,67 @@ class Simulation:
 
     def run(self):
         print("Running")
-        print(len(self.boxesToInsert))
+        m = len(self.boxesToInsert)
         for i, listOfBoxes in enumerate(self.boxesToInsert):
-            self.smart_insert_times.append(self.smartWarehouse.insertBoxes(deepcopy(listOfBoxes)))
+            if not self.load_storage:
+                self.smart_insert_times.append(self.smartWarehouse.insertBoxes(deepcopy(listOfBoxes)))
             self.greedy_insert_times.append(self.greedyWarehouse.insertBoxes(deepcopy(listOfBoxes)))
             self.random_insert_times.append(self.randomWarehouse.insertBoxes(deepcopy(listOfBoxes)))
+            if i % (m/10) == 0:
+                print('10%')
+
+        if self.load_storage:
+            with open(f"insert_times_{config.LIMIT_FOR_SMART_USE}greedy_{config.MAX_ITR}maxitr.pkl", 'rb') as f:
+                self.smart_insert_times = pickle.load(f)
+        if not self.load_storage:
+            with open(f"storage_{config.LIMIT_FOR_SMART_USE}greedy_{config.MAX_ITR}maxitr_{config.EMPTY_SPACE_LEN_FACTOR}emptyspacesfactor.pkl", 'wb') as f:
+                pickle.dump(self.smartWarehouse.storage, f)
+            with open(f"insert_times_{config.LIMIT_FOR_SMART_USE}greedy_{config.MAX_ITR}maxitr_{config.EMPTY_SPACE_LEN_FACTOR}emptyspacesfactor.pkl", 'wb') as f:
+                pickle.dump(self.smart_insert_times, f)
 
         print("Insertion finished")
         self.greedyWarehouse.organizeStorageList()
         self.randomWarehouse.organizeStorageList()
         print(len(self.boxesToRemove))
         print("Starting removal")
-        self.remove_limit = 800
-        for i, listOfBoxes in enumerate(self.boxesToRemove[:self.remove_limit]):
+        self.remove_limit = 3900
+        self.remove_start = 3200
+        for i, listOfBoxes in enumerate(self.boxesToRemove[self.remove_start:self.remove_limit]):
             self.smart_remove_times.append(self.smartWarehouse.removeProductsList(deepcopy(listOfBoxes)))
             self.greedy_remove_times.append(self.greedyWarehouse.removeProducts(deepcopy(listOfBoxes)))
             self.random_remove_times.append(self.randomWarehouse.removeProducts(deepcopy(listOfBoxes)))
-
+            if i % ((self.remove_limit-self.remove_start)/10) == 0:
+                print('10%')
         print("Removal finished")
 
     def showResults(self):
         smart_better_than_greedy = 0
         smart_better_than_random = 0
+        smart_equals_greedy = 0
+        smart_equals_random = 0
         nInsert = len(self.boxesToInsert)
-        nRemove = self.remove_limit
+        nRemove = self.remove_limit-self.remove_start
         for i in range(nRemove):
             if self.smart_remove_times[i] < self.greedy_remove_times[i]:
                 smart_better_than_greedy += 1
             if self.smart_remove_times[i] < self.random_remove_times[i]:
                 smart_better_than_random += 1
 
-        print('SmartWarehouse is better than GreedyWarehouse in' +
-              str(float(smart_better_than_greedy*100)/float(nRemove)) + 'of the cases')
-        print('SmartWarehouse is better than RandomWarehouse in' +
-              str(float(smart_better_than_random*100)/float(nRemove)) + 'of the cases')
+        for i in range(nRemove):
+            if self.smart_remove_times[i] == self.greedy_remove_times[i]:
+                smart_equals_greedy += 1
+            if self.smart_remove_times[i] == self.random_remove_times[i]:
+                smart_equals_random += 1
+
+        print('SmartWarehouse is better than GreedyWarehouse in ' +
+              str(float(smart_better_than_greedy*100)/float(nRemove)) + '% of the cases')
+        print('SmartWarehouse is better than RandomWarehouse in ' +
+              str(float(smart_better_than_random*100)/float(nRemove)) + '% of the cases')
+
+        print('SmartWarehouse is equal to GreedyWarehouse in ' +
+              str(float(smart_equals_greedy * 100) / float(nRemove)) + '% of the cases')
+        print('SmartWarehouse is equal to RandomWarehouse in ' +
+              str(float(smart_equals_random * 100) / float(nRemove)) + '% of the cases')
 
         total_remove_time_smart = sum(self.smart_remove_times)
         total_insert_time_smart = sum(self.smart_insert_times)
@@ -149,7 +182,10 @@ class Simulation:
         print('Total times')
         print(
             tabulate({'Insertion': [total_insert_time_smart, total_insert_time_greedy, total_insert_time_random],
-                      'Removal': [total_remove_time_smart,total_remove_time_greedy, total_remove_time_random]},
+                      'Removal': [total_remove_time_smart,total_remove_time_greedy, total_remove_time_random],
+                      'Total': [total_insert_time_smart+total_remove_time_smart,
+                                total_insert_time_greedy+total_remove_time_greedy,
+                                total_insert_time_random+total_remove_time_random]},
                      headers='keys', tablefmt='fancy_grid',
                      showindex=['Smart', 'Greedy', 'Random'])
         )
@@ -170,20 +206,38 @@ class Simulation:
                      showindex=['Smart', 'Greedy', 'Random'])
         )
 
-        plt.scatter(range(nInsert), self.smart_insert_times)
-        plt.scatter(range(nInsert), self.greedy_insert_times)
-        plt.scatter(range(nInsert), self.random_insert_times)
+
+        plt.scatter(range(len(self.random_insert_times)), self.random_insert_times, color='orange', label="Random")
+        plt.scatter(range(len(self.greedy_insert_times)), self.greedy_insert_times, color='green', label="Greedy")
+        plt.scatter(range(len(self.smart_insert_times)), self.smart_insert_times, color='blue', label="Smart")
         plt.legend()
         plt.title('Insertion times')
         plt.show()
-        plt.scatter(range(nRemove), self.smart_remove_times)
-        plt.scatter(range(nRemove), self.random_remove_times)
-        plt.scatter(range(nRemove), self.greedy_remove_times)
-        plt.title('Removal times')
+        plt.scatter(range(nRemove), self.random_remove_times, color='orange', label="Random")
+        plt.scatter(range(nRemove), self.greedy_remove_times, color='green', label="Greedy")
+        plt.scatter(range(nRemove), self.smart_remove_times, color='blue', label="Smart")
+        plt.title(f"Removal times - removal[{self.remove_start}:{self.remove_limit}]")
+        plt.legend()
+        plt.show()
+
+        # the graph with the mean of every k batches
+        remove_mean_k_times_smart = []
+        remove_mean_k_times_greedy = []
+        remove_mean_k_times_random = []
+        size_to_mean = 10
+        for i in range(0, self.remove_limit-self.remove_start, size_to_mean):
+            remove_mean_k_times_smart.append(np.mean(self.smart_remove_times[i:i+size_to_mean]))
+            remove_mean_k_times_greedy.append(np.mean(self.greedy_remove_times[i:i + size_to_mean]))
+            remove_mean_k_times_random.append(np.mean(self.random_remove_times[i:i + size_to_mean]))
+        plt.plot(range(0,nRemove,size_to_mean), remove_mean_k_times_smart, color='blue', label="Smart", linewidth=0.5)
+        plt.plot(range(0,nRemove,size_to_mean), remove_mean_k_times_greedy, color='green', label="Greedy", linewidth=0.5)
+        plt.plot(range(0,nRemove,size_to_mean), remove_mean_k_times_random, color='orange', label="Random", linewidth=0.5)
+        plt.title(f"Removal mean times ({size_to_mean}) removal[{self.remove_start}:{self.remove_limit}]")
+        plt.legend()
         plt.show()
 
 if __name__ == '__main__':
-    s = Simulation()
+    s = Simulation(load_storage=False)
     s.setup()
     s.run()
     s.showResults()
