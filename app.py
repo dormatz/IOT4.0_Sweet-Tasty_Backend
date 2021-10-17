@@ -7,9 +7,15 @@ from WarehouseMapping import WarehouseMapping
 from TSP import TSPsolver
 from copy import deepcopy
 import json
+import pandas as pd
 
 app = Flask(__name__)
 #app.run(host="0.0.0.0")
+
+def areValidIDs(ids):
+    df = pd.read_csv('csvs/Warehouse_traffic.csv')
+    allIDs = df['Product_ID'].drop_duplicates()
+    return pd.DataFrame(ids).isin(allIDs.values).all().item()
 
 @app.route('/insert', methods=['POST', 'GET'])
 def insert():
@@ -21,7 +27,9 @@ def insert():
     ids = args['ids']
     quantities = args['quantity']
     boxesToInsert = []
-    if args['ids'] is None or len(ids) == 0: return ""
+    if args['ids'] is None or len(ids) == 0 : return "", 400
+    if not areValidIDs(ids):
+        return "Error: Invalid IDs", 422
     for i in range(len(ids)):
         boxesToInsert.insert(0, Box(ids[i], quantities[i]))
     best_env, _, _ = getBestState(boxesToInsert)
@@ -48,7 +56,9 @@ def remove():
     ids = args['ids']
     quantities = args['quantity']
     boxesToRemove = []
-    if args['ids'] is None or len(ids) == 0: return ""
+    if args['ids'] is None or len(ids) == 0: return "", 400
+    if not areValidIDs(ids):
+        return "Error: Invalid IDs", 422
     for i in range(len(ids)):
         boxesToRemove.insert(0, Box(ids[i], quantities[i]))
     removedPlaces = getRemovedPlaces(boxesToRemove)

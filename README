@@ -1,15 +1,40 @@
 PRE RUN:
+Front-end:
+Install android studio
+install flutter and set up the emulator at version 9 API-28 (https://flutter.dev/docs/get-started/install)
 
+in terminal of the IDE, run:
+flutter pub add cloud_firestore
+flutter pub add http
+flutter pub add modal_progress_hud_nsn
+flutter pub add flutter_speed_dial
+flutter pub add flutter_barcode_scanner
+
+packages dependencies:
+cupertino_icons: ^1.0.2
+cloud_firestore: ^2.2.0
+http: ^0.13.3
+modal_progress_hud_nsn: ^0.1.0-nullsafety-1
+flutter_speed_dial: ^3.0.5
+flutter_barcode_scanner: ^2.0.0
+
+
+To open the emulator go to the AVD manager. Then hit run in the IDE to open the app in the emulator.
+
+
+Back-end:
+Make sure you've installed python3 (version 3.7 or above)
 pip3 install torch
-
 pip3 install google-cloud-storage
 pip3 install firebase
 pip3 install firebase_admin
-
 pip3 install flask
 pip3 install flask_restful
-
 pip3 install ortools
+pip install numpy
+pip install pandas
+pip install matplotlib
+pip install tabulate
 
 HOW TO RUN:
 

@@ -101,7 +101,7 @@ def printBestRoute(route, total_time):
 """"Entry point to the module"""
 
 def TSPsolver(places: List[Place]):
-    if(len(places) < 10):
+    if(len(places) < 9):
         return bruteTSP(places)
     if (places is None or len(places)==0):
         return [], 0
@@ -122,7 +122,6 @@ def pairShelfsToBestRoute(best_route: List[int], places : List[Place]):
     places.sort(key=indexOfLocation)
     return places
 
-""""Calculates best path using the brute-force algo"""
 
 def bruteTSP(places : List[Place]):
     map = np.load("MappingMatrix.dat", allow_pickle=True)
@@ -139,14 +138,12 @@ def bruteTSP(places : List[Place]):
 
 if __name__ =='__main__':
     pl = []
-    for i in range(0,200):
-        for j in range(0,2):
-            pl.append(Place(i,j))
-    places = [Place(788, 2), Place(400,2), Place(252,4), Place(4,1),Place(100,1),Place(78,1),Place(555,1),]
+    places = [Place(4,1),Place(100,1),Place(78,1),Place(555,1),Place(44,2),Place(707,4)]
     st = time()
-    res, calculated_time = TSPsolver(pl)
+    res, calculated_time = TSPsolver(places)
     print(time()-st)
     st2 = time()
     _, t = bruteTSP(places)
     print(time()-st2)
+
 

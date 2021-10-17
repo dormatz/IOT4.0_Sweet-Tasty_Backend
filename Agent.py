@@ -150,7 +150,7 @@ def getRemovedPlaces(itemsToRemove: List[Box], warehouse=None):
                     if place[0] not in option:
                         #could happen when we want to remove two boxes with same id
                         boxesOptionsWithItem.append(option+[place[0]])
-            boxesOptions = boxesOptionsWithItem
+            boxesOptions = boxesOptionsWithItem if boxesOptionsWithItem != [] else boxesOptions
     chosenOption = min(deepcopy(boxesOptions), key=lambda obj: TSPsolver(deepcopy(obj))[1])
     for i in range(len(chosenOption)):
         warehouse.removeProducts(chosenOption[i], itemsToRemove[i].quantity)
