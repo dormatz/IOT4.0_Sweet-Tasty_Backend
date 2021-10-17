@@ -20,7 +20,10 @@ flutter_barcode_scanner: ^2.0.0
 
 
 To open the emulator go to the AVD manager. Then hit run in the IDE to open the app in the emulator.
-
+By default, if you run the flask server and emulator on the same computer, the http requests will work
+without any change (default ip 10.0.2.2). if you run them on different machine you need to configure the ip in main.dart
+and possibly change the server's network router firewall so it accepts entering initiating (syn) http requests.
+if you dont have access to your router's firewall, just run the server and emulator on the same pc.
 
 Back-end:
 Make sure you've installed python3 (version 3.7 or above)
