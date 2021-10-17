@@ -133,8 +133,8 @@ class Simulation:
         self.randomWarehouse.organizeStorageList()
         print(len(self.boxesToRemove))
         print("Starting removal")
-        self.remove_limit = 3900
-        self.remove_start = 3200
+        self.remove_limit = 800
+        self.remove_start = 0
         for i, listOfBoxes in enumerate(self.boxesToRemove[self.remove_start:self.remove_limit]):
             self.smart_remove_times.append(self.smartWarehouse.removeProductsList(deepcopy(listOfBoxes)))
             self.greedy_remove_times.append(self.greedyWarehouse.removeProducts(deepcopy(listOfBoxes)))
