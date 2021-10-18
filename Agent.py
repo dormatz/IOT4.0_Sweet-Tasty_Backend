@@ -104,7 +104,7 @@ class Agent(object):
 
 def getBestState(BoxesToInsert: List[Box], warehouse=None):
     n = len(BoxesToInsert)
-    max_itr = min(config.MAX_ITR, choose(config.EMPTY_SPACE_LEN_FACTOR * n, n)+2)
+    max_itr = min(config.MAX_ITR, choose(config.EMPTY_SPACE_LEN_FACTOR * n, n)+2) if n <=6 else 3
     #print(f"max itr is {max_itr}")
     best_reward = -math.inf
     num_of_horizons_not_improved = 0
@@ -167,3 +167,26 @@ def choose(n, k):
         return ntok // ktok
     else:
         return 0
+
+
+def getClosestRemovedPlaces(itemsToRemove: List[Box], warehouse=None):
+    """Basically choosing which items to remove if there are a lot options with those IDs"""
+    warehouse = Warehouse(0) if warehouse is None else warehouse
+    itemNotFound = []
+    chosenOption = []
+    for item in itemsToRemove:
+        boxes = [Place(box['place'].location, box['place'].shelf) for box in warehouse.storage if box['box'].id == item.id and box['box'].quantity >= item.quantity]
+        if len(boxes):
+            i = 0
+            while boxes[i] in chosenOption:
+                i+=1
+            chosenOption.append(boxes[i])
+        else:
+            itemNotFound.append(item)
+    for item in itemNotFound:
+        itemsToRemove.remove(item)
+    if len(chosenOption) == 0:
+        return None
+    for i in range(len(chosenOption)):
+        warehouse.removeProducts(chosenOption[i], itemsToRemove[i].quantity)
+    return chosenOption, warehouse.addToEmptySpaces, warehouse.updatedStorage

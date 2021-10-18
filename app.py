@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_restful import reqparse
 from Env import Box, saveEmptySpaces, saveStorage, Warehouse
-from Agent import getBestState, getRemovedPlaces
+from Agent import getBestState, getRemovedPlaces, getClosestRemovedPlaces
 from firebase_con import setEmptySpaces
 from WarehouseMapping import WarehouseMapping
 from TSP import TSPsolver
@@ -61,7 +61,7 @@ def remove():
         return "Error: Invalid IDs", 422
     for i in range(len(ids)):
         boxesToRemove.insert(0, Box(ids[i], quantities[i]))
-    removedPlaces = getRemovedPlaces(boxesToRemove)
+    removedPlaces = getRemovedPlaces(boxesToRemove) if len(boxesToRemove) < 7 else getClosestRemovedPlaces(boxesToRemove)
     if removedPlaces is None:
         return "None exist"
     places, emptySpaces, RemovedStorage = removedPlaces
